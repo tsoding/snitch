@@ -2,6 +2,7 @@ package main
 
 import "fmt"
 import "os"
+import "path/filepath"
 
 type Todo struct {
 	Prefix string
@@ -12,7 +13,6 @@ type Todo struct {
 }
 
 func (todo Todo) String() string {
-	// TODO: Todo.String doesn't print id
 	if todo.Id == nil {
 		return fmt.Sprintf("%s:%d: %sTODO: %s\n",
 			todo.Filename, todo.Line,
@@ -28,8 +28,8 @@ func ref_str(x string) *string {
 	return &x
 }
 
-func TodosOfDir(dirpath string) []Todo {
-	// TODO: TodosOfDir is not implemented
+func TodosOfFile(path string) []Todo {
+	// TODO: TodosOfFile is not implemented
 	return []Todo {
 		Todo {
 			Prefix: "// ",
@@ -48,8 +48,26 @@ func TodosOfDir(dirpath string) []Todo {
 	}
 }
 
+func TodosOfDir(dirpath string) ([]Todo, error) {
+	result := []Todo{}
+
+	err := filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			for _, todo := range TodosOfFile(path) {
+				result = append(result, todo)
+			}
+		}
+		return nil
+	})
+
+	return result, err
+}
+
 func ListSubcommand() {
-	for _, todo := range TodosOfDir(".") {
+	// TODO: ListSubcommand doesn't handle error from TodosOfDir
+	todos, _ := TodosOfDir(".")
+
+	for _, todo := range todos {
 		fmt.Printf("%v", todo)
 	}
 }
