@@ -114,7 +114,7 @@ func ReportSubcommand() {
 }
 
 func main() {
-	// TODO: index out of range error when no subcommands are provided
+	// TODO(#6): index out of range error when no subcommands are provided
 	switch os.Args[1] {
 	case "list":
 		ListSubcommand()
