@@ -8,7 +8,6 @@
   - unclear documentation
   - unreadable or straight up bad code
   - any problem that you ran into while setting up the project on your side
-- Please, do not try to fix issues marked with "good for stream" label. They are for the stream. :)
 
 # Pull Requests
 
