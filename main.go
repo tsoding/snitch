@@ -109,7 +109,7 @@ func ListSubcommand() {
 }
 
 func ReportSubcommand() {
-	// TODO: ReportSubcommand is not implemented
+	// TODO(#5): ReportSubcommand is not implemented
 	panic("report is not implemented")
 }
 
