@@ -19,8 +19,8 @@ A simple tool that collects TODOs in the source code and reports them as GitHub 
 ## Usage
 
 ```
-$ snitch list     # lists all TODOs in the current dir
-$ snitch report   # report all unreported TODOs in the current dir
+$ go run main.go list     # lists all TODOs in the current dir
+$ go run main.go report   # report all unreported TODOs in the current dir
 ```
 
 ## GitHub Credentials File
