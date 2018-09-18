@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	// "regexp"
+	"regexp"
 )
 
 type Todo struct {
@@ -33,13 +33,21 @@ func ref_str(x string) *string {
 }
 
 func LineAsTodo(line string) *Todo {
-	// return Todo {
-	// 	Prefix: "// ",
-	// 	Suffix: "khooy",
-	// 	Id: ref_str("#42"),
-	// 	Filename: "./main.go",
-	// 	Line: 10,
-	// }
+	// TODO: LineAsTodo does not support reported TODOs
+	// TODO: LineAsTodo has false positive result inside of string literals
+	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
+	groups := unreportedTodo.FindStringSubmatch(line)
+
+	if groups != nil {
+		return &Todo {
+			Prefix: groups[1],
+			Suffix: groups[2],
+			Id: nil,
+			Filename: "",
+			Line: 0,
+		}
+	}
+
 	return nil
 }
 
@@ -52,12 +60,18 @@ func TodosOfFile(path string) ([]Todo, error) {
 	}
 	defer file.Close()
 
+	line := 1
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		todo := LineAsTodo(scanner.Text())
 		if todo != nil {
+			todo.Filename = path
+			todo.Line = line
+
 			result = append(result, *todo)
 		}
+
+		line = line + 1
 	}
 
 	return result, scanner.Err()
