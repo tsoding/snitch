@@ -100,7 +100,7 @@ func TodosOfDir(dirpath string) ([]Todo, error) {
 }
 
 func ListSubcommand() {
-	// TODO: ListSubcommand doesn't handle error from TodosOfDir
+	// TODO(#3): ListSubcommand doesn't handle error from TodosOfDir
 	todos, _ := TodosOfDir(".")
 
 	for _, todo := range todos {
