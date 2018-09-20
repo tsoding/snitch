@@ -124,7 +124,7 @@ func main() {
 			panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
 		}
 	} else {
-		//TODO (#8) implement a map for options instead of println'ing them all there
+		//TODO(#9): implement a map for options instead of println'ing them all there
 		//also, not sure these descriptions are exactly what rexim means by them
 		fmt.Printf("snitch [opt]\n\tlist: lists all todos of a dir recursively\n\treport: reports an issue to github\n")
 	}
