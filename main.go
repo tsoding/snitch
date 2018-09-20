@@ -9,11 +9,11 @@ import (
 )
 
 type Todo struct {
-	Prefix string
-	Suffix string
-	Id *string
+	Prefix   string
+	Suffix   string
+	Id       *string
 	Filename string
-	Line int
+	Line     int
 }
 
 func (todo Todo) String() string {
@@ -39,12 +39,12 @@ func LineAsTodo(line string) *Todo {
 	groups := unreportedTodo.FindStringSubmatch(line)
 
 	if groups != nil {
-		return &Todo {
-			Prefix: groups[1],
-			Suffix: groups[2],
-			Id: nil,
+		return &Todo{
+			Prefix:   groups[1],
+			Suffix:   groups[2],
+			Id:       nil,
 			Filename: "",
-			Line: 0,
+			Line:     0,
 		}
 	}
 
@@ -83,7 +83,7 @@ func TodosOfDir(dirpath string) ([]Todo, error) {
 	err := filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
 			todos, err := TodosOfFile(path)
-			
+
 			if err != nil {
 				return err
 			}
@@ -114,13 +114,18 @@ func ReportSubcommand() {
 }
 
 func main() {
-	// TODO(#6): index out of range error when no subcommands are provided
-	switch os.Args[1] {
-	case "list":
-		ListSubcommand()
-	case "report":
-		ReportSubcommand()
-	default:
-		panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "list":
+			ListSubcommand()
+		case "report":
+			ReportSubcommand()
+		default:
+			panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
+		}
+	} else {
+		//TODO (#7) implement a map for options instead of println'ing them all there
+		//also, not sure these descriptions are exactly what rexim means by them
+		fmt.Printf("snitch [opt]\n\tlist: lists all possible subcommands\n\treport: reports an issue to github\n")
 	}
 }
