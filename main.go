@@ -106,15 +106,10 @@ func WalkTodosOfFile(path string, visit func (Todo) error) error {
 	return scanner.Err()
 }
 
-func TodosOfDir(dirpath string) ([]Todo, error) {
-	result := []Todo{}
-
-	err := filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
+func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
+	return filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			err := WalkTodosOfFile(path, func(todo Todo) error {
-				result = append(result, todo)
-				return nil
-			})
+			err := WalkTodosOfFile(path, visit)
 
 			if err != nil {
 				return err
@@ -123,25 +118,23 @@ func TodosOfDir(dirpath string) ([]Todo, error) {
 
 		return nil
 	})
-
-	return result, err
 }
 
-func ListSubcommand() {
-	// TODO(#3): ListSubcommand doesn't handle error from TodosOfDir
-	todos, _ := TodosOfDir(".")
-
-	for _, todo := range todos {
+func ListSubcommand() error {
+	return WalkTodosOfDir(".", func(todo Todo) error {
 		fmt.Printf("%v", todo)
-	}
+		return nil
+	})
 }
 
-func ReportSubcommand() {
+func ReportSubcommand() error {
 	// TODO(#5): ReportSubcommand is not implemented
 	panic("report is not implemented")
+	return nil
 }
 
 func main() {
+	// TODO: error results of subcommands are not handled
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
