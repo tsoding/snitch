@@ -79,12 +79,10 @@ func LineAsTodo(line string) *Todo {
 	return nil
 }
 
-func TodosOfFile(path string) ([]Todo, error) {
-	result := []Todo{}
-
+func WalkTodosOfFile(path string, visit func (Todo) error) error {
 	file, err := os.Open(path)
 	if err != nil {
-		return []Todo{}, err
+		return err
 	}
 	defer file.Close()
 
@@ -92,17 +90,20 @@ func TodosOfFile(path string) ([]Todo, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		todo := LineAsTodo(scanner.Text())
+
 		if todo != nil {
 			todo.Filename = path
 			todo.Line = line
 
-			result = append(result, *todo)
+			if err := visit(*todo); err != nil {
+				return err
+			}
 		}
 
 		line = line + 1
 	}
 
-	return result, scanner.Err()
+	return scanner.Err()
 }
 
 func TodosOfDir(dirpath string) ([]Todo, error) {
@@ -110,14 +111,13 @@ func TodosOfDir(dirpath string) ([]Todo, error) {
 
 	err := filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			todos, err := TodosOfFile(path)
+			err := WalkTodosOfFile(path, func(todo Todo) error {
+				result = append(result, todo)
+				return nil
+			})
 
 			if err != nil {
 				return err
-			}
-
-			for _, todo := range todos {
-				result = append(result, todo)
 			}
 		}
 
