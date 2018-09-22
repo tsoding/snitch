@@ -79,12 +79,10 @@ func LineAsTodo(line string) *Todo {
 	return nil
 }
 
-func TodosOfFile(path string) ([]Todo, error) {
-	result := []Todo{}
-
+func WalkTodosOfFile(path string, visit func (Todo) error) error {
 	file, err := os.Open(path)
 	if err != nil {
-		return []Todo{}, err
+		return err
 	}
 	defer file.Close()
 
@@ -92,56 +90,51 @@ func TodosOfFile(path string) ([]Todo, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		todo := LineAsTodo(scanner.Text())
+
 		if todo != nil {
 			todo.Filename = path
 			todo.Line = line
 
-			result = append(result, *todo)
+			if err := visit(*todo); err != nil {
+				return err
+			}
 		}
 
 		line = line + 1
 	}
 
-	return result, scanner.Err()
+	return scanner.Err()
 }
 
-func TodosOfDir(dirpath string) ([]Todo, error) {
-	result := []Todo{}
-
-	err := filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
+func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
+	return filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			todos, err := TodosOfFile(path)
+			err := WalkTodosOfFile(path, visit)
 
 			if err != nil {
 				return err
-			}
-
-			for _, todo := range todos {
-				result = append(result, todo)
 			}
 		}
 
 		return nil
 	})
-
-	return result, err
 }
 
-func ListSubcommand() {
-	// TODO(#3): ListSubcommand doesn't handle error from TodosOfDir
-	todos, _ := TodosOfDir(".")
-
-	for _, todo := range todos {
+func ListSubcommand() error {
+	return WalkTodosOfDir(".", func(todo Todo) error {
 		fmt.Printf("%v", todo)
-	}
+		return nil
+	})
 }
 
-func ReportSubcommand() {
+func ReportSubcommand() error {
 	// TODO(#5): ReportSubcommand is not implemented
 	panic("report is not implemented")
+	return nil
 }
 
 func main() {
+	// TODO(#16): error results of subcommands are not handled
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
