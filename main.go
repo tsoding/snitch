@@ -134,7 +134,7 @@ func ReportSubcommand() error {
 }
 
 func main() {
-	// TODO: error results of subcommands are not handled
+	// TODO(#16): error results of subcommands are not handled
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
