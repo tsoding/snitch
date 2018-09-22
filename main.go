@@ -32,9 +32,7 @@ func ref_str(x string) *string {
 	return &x
 }
 
-func LineAsTodo(line string) *Todo {
-	// TODO(#1): LineAsTodo does not support reported TODOs
-	// TODO(#2): LineAsTodo has false positive result inside of string literals
+func LineAsUnreportedTodo(line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
 
@@ -46,6 +44,36 @@ func LineAsTodo(line string) *Todo {
 			Filename: "",
 			Line:     0,
 		}
+	}
+
+	return nil
+}
+
+func LineAsReportedTodo(line string) *Todo {
+	unreportedTodo := regexp.MustCompile("^(.*)TODO\\((.*)\\): (.*)$")
+	groups := unreportedTodo.FindStringSubmatch(line)
+
+	if groups != nil {
+		return &Todo{
+			Prefix:   groups[1],
+			Suffix:   groups[3],
+			Id:       &groups[2],
+			Filename: "",
+			Line:     0,
+		}
+	}
+
+	return nil
+}
+
+func LineAsTodo(line string) *Todo {
+	// TODO(#2): LineAsTodo has false positive result inside of string literals
+	if todo := LineAsUnreportedTodo(line); todo != nil {
+		return todo
+	}
+
+	if todo := LineAsReportedTodo(line); todo != nil {
+		return todo
 	}
 
 	return nil
