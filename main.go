@@ -16,6 +16,14 @@ type Todo struct {
 	Line     int
 }
 
+type GithubCredentials struct {
+}
+
+func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
+	// TODO: GithubCredentialsFromFile is not implemented
+	return GithubCredentials{}, nil
+}
+
 func (todo Todo) String() string {
 	if todo.Id == nil {
 		return fmt.Sprintf("%s:%d: %sTODO: %s\n",
@@ -26,6 +34,11 @@ func (todo Todo) String() string {
 			todo.Filename, todo.Line,
 			todo.Prefix, *todo.Id, todo.Suffix)
 	}
+}
+
+func (todo Todo) Update() error {
+	// TODO: Todo.Update() is not implemented
+	return nil
 }
 
 func ref_str(x string) *string {
@@ -127,20 +140,58 @@ func ListSubcommand() error {
 	})
 }
 
-func ReportSubcommand() error {
-	// TODO(#5): ReportSubcommand is not implemented
-	panic("report is not implemented")
+func ReportTodo(todo Todo, creds GithubCredentials) (Todo, error) {
+	// TODO: ReportTodo is not implemented
+	return Todo{}, nil
+}
+
+func ReportSubcommand(creds GithubCredentials) error {
+	reportedTodos := []Todo{}
+
+	err := WalkTodosOfDir(".", func(todo Todo) error {
+		if todo.Id == nil {
+			reportedTodo, err := ReportTodo(todo, creds)
+
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("[REPORTED] %v\n", todo)
+
+			reportedTodos = append(reportedTodos, reportedTodo)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, todo := range reportedTodos {
+		err := todo.Update()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func main() {
+	creds, err := GithubCredentialsFromFile("~/.snitch/github.ini")
+
+	if err != nil {
+		panic(err.Error())
+	}
+
 	// TODO(#16): error results of subcommands are not handled
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
 			ListSubcommand()
 		case "report":
-			ReportSubcommand()
+			ReportSubcommand(creds)
 		default:
 			panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
 		}
