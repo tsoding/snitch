@@ -20,7 +20,7 @@ type GithubCredentials struct {
 }
 
 func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
-	// TODO: GithubCredentialsFromFile is not implemented
+	// TODO(#18): GithubCredentialsFromFile is not implemented
 	return GithubCredentials{}, nil
 }
 
