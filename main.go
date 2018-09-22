@@ -141,7 +141,7 @@ func ListSubcommand() error {
 }
 
 func ReportTodo(todo Todo, creds GithubCredentials) (Todo, error) {
-	// TODO: ReportTodo is not implemented
+	// TODO(#20): ReportTodo is not implemented
 	return Todo{}, nil
 }
 
