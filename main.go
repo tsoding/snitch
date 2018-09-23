@@ -36,11 +36,11 @@ func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
 
 func (todo Todo) String() string {
 	if todo.Id == nil {
-		return fmt.Sprintf("%s:%d: %sTODO: %s\n",
+		return fmt.Sprintf("%s:%d: %sTODO: %s",
 			todo.Filename, todo.Line,
 			todo.Prefix, todo.Suffix)
 	} else {
-		return fmt.Sprintf("%s:%d: %sTODO(%s): %s\n",
+		return fmt.Sprintf("%s:%d: %sTODO(%s): %s",
 			todo.Filename, todo.Line,
 			todo.Prefix, *todo.Id, todo.Suffix)
 	}
@@ -145,7 +145,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 
 func ListSubcommand() error {
 	return WalkTodosOfDir(".", func(todo Todo) error {
-		fmt.Printf("%v", todo)
+		fmt.Printf("%v\n", todo)
 		return nil
 	})
 }
@@ -157,16 +157,34 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 
 func ReportSubcommand(creds GithubCredentials, repo string) error {
 	reportedTodos := []Todo{}
+	reader := bufio.NewReader(os.Stdin)
 
 	err := WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.Id == nil {
+			fmt.Printf("%v\n", todo);
+
+			fmt.Printf("Do you want to report this? [y/n] ");
+			text, err := reader.ReadString('\n')
+			for err == nil && text != "y\n" && text != "n\n" {
+				fmt.Printf("Do you want to report this? [y/n] ");
+				text, err = reader.ReadString('\n')
+			}
+
+			if err != nil {
+				return err
+			}
+
+			if text == "n\n" {
+				return nil
+			}
+
 			reportedTodo, err := ReportTodo(todo, creds, repo)
 
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("[REPORTED] %v\n", todo)
+			fmt.Printf("[REPORTED] %v\n", reportedTodo)
 
 			reportedTodos = append(reportedTodos, reportedTodo)
 		}
