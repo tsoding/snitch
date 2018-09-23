@@ -3,7 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"gopkg.in/go-ini/ini.v1"
 	"os"
+	"os/user"
+	"path"
 	"path/filepath"
 	"regexp"
 )
@@ -17,11 +20,18 @@ type Todo struct {
 }
 
 type GithubCredentials struct {
+	PersonalToken string
 }
 
 func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
-	// TODO(#18): GithubCredentialsFromFile is not implemented
-	return GithubCredentials{}, nil
+	cfg, err := ini.Load(filepath)
+	if err != nil {
+		return GithubCredentials{}, err
+	}
+
+	return GithubCredentials {
+		PersonalToken : cfg.Section("github").Key("personal_token").String(),
+	}, nil
 }
 
 func (todo Todo) String() string {
@@ -179,10 +189,15 @@ func ReportSubcommand(creds GithubCredentials) error {
 }
 
 func main() {
-	creds, err := GithubCredentialsFromFile("~/.snitch/github.ini")
-
+	usr, err := user.Current()
 	if err != nil {
-		panic(err.Error())
+		panic(err)
+	}
+
+	creds, err := GithubCredentialsFromFile(
+		path.Join(usr.HomeDir, ".snitch/github.ini"))
+	if err != nil {
+		panic(err)
 	}
 
 	// TODO(#16): error results of subcommands are not handled
