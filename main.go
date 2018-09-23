@@ -155,7 +155,7 @@ func ListSubcommand() error {
 func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	client := &http.Client{}
 
-	// TODO: ReportTodo doesn't use a proper json library to encode json
+	// TODO(#28): ReportTodo doesn't use a proper json library to encode json
 	var jsonBody = []byte(`{"title": "` + todo.Suffix + `"}`)
 
 	req, err := http.NewRequest(
