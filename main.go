@@ -150,17 +150,17 @@ func ListSubcommand() error {
 	})
 }
 
-func ReportTodo(todo Todo, creds GithubCredentials) (Todo, error) {
+func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	// TODO(#20): ReportTodo is not implemented
 	return Todo{}, nil
 }
 
-func ReportSubcommand(creds GithubCredentials) error {
+func ReportSubcommand(creds GithubCredentials, repo string) error {
 	reportedTodos := []Todo{}
 
 	err := WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.Id == nil {
-			reportedTodo, err := ReportTodo(todo, creds)
+			reportedTodo, err := ReportTodo(todo, creds, repo)
 
 			if err != nil {
 				return err
@@ -188,6 +188,13 @@ func ReportSubcommand(creds GithubCredentials) error {
 	return nil
 }
 
+func usage() {
+	// TODO(#9): implement a map for options instead of println'ing them all there
+	fmt.Printf("snitch [opt]\n" +
+		"\tlist: lists all todos of a dir recursively\n" +
+		"\treport <owner/repo>: reports an issue to github\n")
+}
+
 func main() {
 	usr, err := user.Current()
 	if err != nil {
@@ -206,13 +213,16 @@ func main() {
 		case "list":
 			ListSubcommand()
 		case "report":
-			ReportSubcommand(creds)
+			if len(os.Args) < 3 {
+				usage()
+				panic("Not enough arguments")
+			}
+			// TODO(#24): GitHub repo is not automatically derived from the git repo
+			ReportSubcommand(creds, os.Args[2])
 		default:
 			panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
 		}
 	} else {
-		//TODO(#9): implement a map for options instead of println'ing them all there
-		//also, not sure these descriptions are exactly what rexim means by them
-		fmt.Printf("snitch [opt]\n\tlist: lists all todos of a dir recursively\n\treport: reports an issue to github\n")
+		usage()
 	}
 }
