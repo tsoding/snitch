@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
+	"net/http"
 	"os"
 	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
+	"bytes"
 )
 
 type Todo struct {
@@ -151,8 +153,26 @@ func ListSubcommand() error {
 }
 
 func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
-	// TODO(#20): ReportTodo is not implemented
-	return Todo{}, nil
+	client := &http.Client{}
+
+	// TODO: ReportTodo doesn't use a proper json library to encode json
+	var jsonBody = []byte(`{"title": "` + todo.Suffix + `"}`)
+
+	req, err := http.NewRequest(
+		"POST", "https://api.github.com/repos/" + repo + "/issues",
+		bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return Todo{}, nil
+	}
+	req.Header.Add("Authorization", "token " + creds.PersonalToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
+
+	// TODO: ReportTodo doesn't assign the id of reported issue to the original TODO
+
+	return todo, err
 }
 
 func ReportSubcommand(creds GithubCredentials, repo string) error {
