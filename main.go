@@ -217,7 +217,7 @@ func main() {
 				usage()
 				panic("Not enough arguments")
 			}
-			// TODO: GitHub repo is not automatically derived from the git repo
+			// TODO(#24): GitHub repo is not automatically derived from the git repo
 			ReportSubcommand(creds, os.Args[2])
 		default:
 			panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
