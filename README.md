@@ -36,4 +36,6 @@ personal_token = <personal-token>
 
 Checkout [GitHub Help][personal-token] on how to get the Personal Access Token.
 
+Make sure to enable full access to private repos. For some reason it's required to post issues.
+
 [personal-token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
