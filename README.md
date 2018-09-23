@@ -25,4 +25,15 @@ $ go run main.go report   # report all unreported TODOs in the current dir
 
 ## GitHub Credentials File
 
-`~/.snitch/config.ini`
+Resides in `$HOME/.snitch/config.ini`
+
+## Format
+
+```ini
+[github]
+personal_token = <personal-token>
+```
+
+Checkout [GitHub Help][personal-token] on how to get the Personal Access Token.
+
+[personal-token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
