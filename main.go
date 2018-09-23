@@ -170,7 +170,7 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 
-	// TODO: ReportTodo doesn't assign the id of reported issue to the original TODO
+	// TODO(#29): ReportTodo doesn't assign the id of reported issue to the original TODO
 
 	return todo, err
 }
