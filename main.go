@@ -14,6 +14,7 @@ import (
 	"strings"
 	"encoding/json"
 	"strconv"
+	"os/exec"
 )
 
 type Todo struct {
@@ -37,6 +38,14 @@ func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
 	return GithubCredentials {
 		PersonalToken : cfg.Section("github").Key("personal_token").String(),
 	}, nil
+}
+
+func (todo Todo) TodoString() string {
+	if todo.Id == nil {
+		return fmt.Sprintf("TODO")
+	} else {
+		return fmt.Sprintf("TODO(%s)", *todo.Id)
+	}
 }
 
 func (todo Todo) LogString() string {
@@ -287,9 +296,19 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 		if err != nil {
 			return err
 		}
+		
+		err = exec.Command("git", "add", reportedTodo.Filename).Run()
+		if err != nil {
+			return err
+		}
+
+		err = exec.Command("git", "commit", "-m", reportedTodo.TodoString()).Run()
+		if err != nil {
+			return err
+		}
 	}
 
-	return nil
+	return err
 }
 
 func usage() {
