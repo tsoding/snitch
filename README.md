@@ -26,11 +26,17 @@ After that you are supposed to push the new reported TODOs yourself.
 // TODO(#42): rewrite this in Rust
 ```
 
+## Build
+
+```console
+$ go build .
+```
+
 ## Usage
 
-```
-$ go run main.go list     # lists all TODOs in the current dir
-$ go run main.go report   # report all unreported TODOs in the current dir
+```console
+$ snitch list                # lists all TODOs in the current dir
+$ snitch report <owner/repo> # report all unreported TODOs in the current dir
 ```
 
 ## GitHub Credentials File
