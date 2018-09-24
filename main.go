@@ -49,16 +49,16 @@ func (todo Todo) String() string {
 	}
 }
 
-func (todo Todo)UpdateToTemp() string, error {
+func (todo Todo)UpdateToTemp() (string, error) {
 	inputFile, err := os.Open(todo.Filename)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer inputFile.Close()
 
 	outputFile, err := ioutil.TempFile("", todo.Filename)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer func() {
 		cerr := outputFile.Close()
@@ -76,7 +76,7 @@ func (todo Todo)UpdateToTemp() string, error {
 		if todo.Line == line {
 			fmt.Fprintln(outputFile, todo)
 		} else {
-			fmt.Println(outputFile, text)
+			fmt.Fprintln(outputFile, text)
 		}
 
 		line = line + 1
@@ -86,17 +86,12 @@ func (todo Todo)UpdateToTemp() string, error {
 }
 
 func (todo Todo) Update() error {
-	outputFile, err = todo.UpdateToTemp(todo)
+	outputFile, err := todo.UpdateToTemp()
 	if err != nil {
 		return err
 	}
 
-	err := os.Remove(todo.Filename)
-	if err != nil {
-		return err
-	}
-
-	err := os.Rename(outputFile, todo.Filename)
+	err = os.Rename(outputFile, todo.Filename)
 	if err != nil {
 		return err
 	}
