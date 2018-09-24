@@ -3,27 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"gopkg.in/go-ini/ini.v1"
 	"os"
 	"os/user"
 	"path"
 	"os/exec"
 )
-
-type GithubCredentials struct {
-	PersonalToken string
-}
-
-func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
-	cfg, err := ini.Load(filepath)
-	if err != nil {
-		return GithubCredentials{}, err
-	}
-
-	return GithubCredentials {
-		PersonalToken : cfg.Section("github").Key("personal_token").String(),
-	}, nil
-}
 
 func ref_str(x string) *string {
 	return &x
