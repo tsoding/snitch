@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"bytes"
+	"io/ioutil"
 )
 
 type Todo struct {
@@ -48,9 +49,59 @@ func (todo Todo) String() string {
 	}
 }
 
+func (todo Todo)UpdateToTemp() string, error {
+	inputFile, err := os.Open(todo.Filename)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+
+	outputFile, err := ioutil.TempFile("", todo.Filename)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cerr := outputFile.Close()
+		if cerr != nil {
+			err = cerr
+		}
+	}()
+
+	scanner := bufio.NewScanner(inputFile)
+	line := 1
+	
+	for scanner.Scan() {
+		text := scanner.Text()
+
+		if todo.Line == line {
+			fmt.Fprintln(outputFile, todo)
+		} else {
+			fmt.Println(outputFile, text)
+		}
+
+		line = line + 1
+	}
+	
+	return outputFile.Name(), err
+}
+
 func (todo Todo) Update() error {
-	// TODO(#19): Todo.Update() is not implemented
-	return nil
+	outputFile, err = todo.UpdateToTemp(todo)
+	if err != nil {
+		return err
+	}
+
+	err := os.Remove(todo.Filename)
+	if err != nil {
+		return err
+	}
+
+	err := os.Rename(outputFile, todo.Filename)
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 func ref_str(x string) *string {
