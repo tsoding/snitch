@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"bytes"
-	"io/ioutil"
+	"strings"
 )
 
 type Todo struct {
@@ -49,16 +49,16 @@ func (todo Todo) String() string {
 	}
 }
 
-func (todo Todo)UpdateToTemp() (string, error) {
+func (todo Todo)UpdateToFile(outputFilename string) error {
 	inputFile, err := os.Open(todo.Filename)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer inputFile.Close()
 
-	outputFile, err := ioutil.TempFile("", todo.Filename)
+	outputFile, err := os.Create(outputFilename)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer func() {
 		cerr := outputFile.Close()
@@ -82,16 +82,18 @@ func (todo Todo)UpdateToTemp() (string, error) {
 		line = line + 1
 	}
 	
-	return outputFile.Name(), err
+	return err
 }
 
-func (todo Todo) Update() error {
-	outputFile, err := todo.UpdateToTemp()
+func (todo Todo) UpdateInPlace() error {
+	outputFilename := todo.Filename + ".snitch"
+	err := todo.UpdateToFile(outputFilename)
 	if err != nil {
 		return err
 	}
 
-	err = os.Rename(outputFile, todo.Filename)
+	err = os.Rename(outputFilename, todo.Filename)
+
 	if err != nil {
 		return err
 	}
@@ -178,10 +180,10 @@ func WalkTodosOfFile(path string, visit func (Todo) error) error {
 }
 
 func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
-	return filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			err := WalkTodosOfFile(path, visit)
-
+	return filepath.Walk(dirpath, func(filepath string, info os.FileInfo, err error) error {
+		if !info.IsDir() && !strings.HasPrefix(filepath, ".") {
+			err := WalkTodosOfFile(filepath, visit)
+			
 			if err != nil {
 				return err
 			}
@@ -263,7 +265,7 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 	}
 
 	for _, todo := range reportedTodos {
-		err := todo.Update()
+		err := todo.UpdateInPlace()
 		if err != nil {
 			return err
 		}
