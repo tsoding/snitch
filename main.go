@@ -12,6 +12,8 @@ import (
 	"regexp"
 	"bytes"
 	"strings"
+	"encoding/json"
+	"strconv"
 )
 
 type Todo struct {
@@ -228,13 +230,19 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 
-	// TODO(#29): ReportTodo doesn't assign the id of reported issue to the original TODO
+	var v map[string]interface{}
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&v); err != nil {
+		return todo, err
+	}
+
+	todo.Id = ref_str("#" + strconv.Itoa(int(v["number"].(float64))))
 
 	return todo, err
 }
 
 func ReportSubcommand(creds GithubCredentials, repo string) error {
-	reportedTodos := []Todo{}
+	todosToReport := []Todo{}
 	reader := bufio.NewReader(os.Stdin)
 
 	err := WalkTodosOfDir(".", func(todo Todo) error {
@@ -256,15 +264,7 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 				return nil
 			}
 
-			reportedTodo, err := ReportTodo(todo, creds, repo)
-
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("[REPORTED] %v\n", reportedTodo.LogString())
-
-			reportedTodos = append(reportedTodos, reportedTodo)
+			todosToReport = append(todosToReport, todo)
 		}
 
 		return nil
@@ -274,8 +274,16 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 		return err
 	}
 
-	for _, todo := range reportedTodos {
-		err := todo.UpdateInPlace()
+	for _, todo := range todosToReport {
+		reportedTodo, err := ReportTodo(todo, creds, repo)
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("[REPORTED] %v\n", reportedTodo.LogString())
+
+		err = reportedTodo.UpdateInPlace()
 		if err != nil {
 			return err
 		}
