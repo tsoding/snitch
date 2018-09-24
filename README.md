@@ -2,6 +2,16 @@
 
 A simple tool that collects TODOs in the source code and reports them as GitHub issues.
 
+## How it works
+
+1. Snitch finds an unreported TODO,
+2. Reports it to the GitHub as an issue,
+3. Assigns the Issue number to the TODO marking it a reported,
+4. Commits the reported TODO to the git repo,
+5. Repeats the process until all of the unreported TODOs are reported.
+
+After that you are supposed to push the new reported TODOs yourself.
+
 ## TODO Format
 
 ### Unreported TODO
