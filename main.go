@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"bytes"
+	"strings"
 )
 
 type Todo struct {
@@ -36,7 +37,7 @@ func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
 	}, nil
 }
 
-func (todo Todo) String() string {
+func (todo Todo) LogString() string {
 	if todo.Id == nil {
 		return fmt.Sprintf("%s:%d: %sTODO: %s",
 			todo.Filename, todo.Line,
@@ -48,9 +49,66 @@ func (todo Todo) String() string {
 	}
 }
 
-func (todo Todo) Update() error {
-	// TODO(#19): Todo.Update() is not implemented
-	return nil
+func (todo Todo) String() string {
+	if todo.Id == nil {
+		return fmt.Sprintf("%sTODO: %s",
+			todo.Prefix, todo.Suffix)
+	} else {
+		return fmt.Sprintf("%sTODO(%s): %s",
+			todo.Prefix, *todo.Id, todo.Suffix)
+	}
+}
+
+func (todo Todo)UpdateToFile(outputFilename string) error {
+	inputFile, err := os.Open(todo.Filename)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+
+	outputFile, err := os.Create(outputFilename)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cerr := outputFile.Close()
+		if cerr != nil {
+			err = cerr
+		}
+	}()
+
+	scanner := bufio.NewScanner(inputFile)
+	line := 1
+	
+	for scanner.Scan() {
+		text := scanner.Text()
+
+		if todo.Line == line {
+			fmt.Fprintln(outputFile, todo)
+		} else {
+			fmt.Fprintln(outputFile, text)
+		}
+
+		line = line + 1
+	}
+	
+	return err
+}
+
+func (todo Todo) UpdateInPlace() error {
+	outputFilename := todo.Filename + ".snitch"
+	err := todo.UpdateToFile(outputFilename)
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(outputFilename, todo.Filename)
+
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 func ref_str(x string) *string {
@@ -132,10 +190,10 @@ func WalkTodosOfFile(path string, visit func (Todo) error) error {
 }
 
 func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
-	return filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			err := WalkTodosOfFile(path, visit)
-
+	return filepath.Walk(dirpath, func(filepath string, info os.FileInfo, err error) error {
+		if !info.IsDir() && !strings.HasPrefix(filepath, ".") {
+			err := WalkTodosOfFile(filepath, visit)
+			
 			if err != nil {
 				return err
 			}
@@ -147,7 +205,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 
 func ListSubcommand() error {
 	return WalkTodosOfDir(".", func(todo Todo) error {
-		fmt.Printf("%v\n", todo)
+		fmt.Printf("%v\n", todo.LogString())
 		return nil
 	})
 }
@@ -181,7 +239,7 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 
 	err := WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.Id == nil {
-			fmt.Printf("%v\n", todo);
+			fmt.Printf("%v\n", todo.LogString());
 
 			fmt.Printf("Do you want to report this? [y/n] ");
 			text, err := reader.ReadString('\n')
@@ -204,7 +262,7 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 				return err
 			}
 
-			fmt.Printf("[REPORTED] %v\n", reportedTodo)
+			fmt.Printf("[REPORTED] %v\n", reportedTodo.LogString())
 
 			reportedTodos = append(reportedTodos, reportedTodo)
 		}
@@ -217,7 +275,7 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 	}
 
 	for _, todo := range reportedTodos {
-		err := todo.Update()
+		err := todo.UpdateInPlace()
 		if err != nil {
 			return err
 		}
