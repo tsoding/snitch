@@ -37,7 +37,7 @@ func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
 	}, nil
 }
 
-func (todo Todo) String() string {
+func (todo Todo) LogString() string {
 	if todo.Id == nil {
 		return fmt.Sprintf("%s:%d: %sTODO: %s",
 			todo.Filename, todo.Line,
@@ -45,6 +45,16 @@ func (todo Todo) String() string {
 	} else {
 		return fmt.Sprintf("%s:%d: %sTODO(%s): %s",
 			todo.Filename, todo.Line,
+			todo.Prefix, *todo.Id, todo.Suffix)
+	}
+}
+
+func (todo Todo) String() string {
+	if todo.Id == nil {
+		return fmt.Sprintf("%sTODO: %s",
+			todo.Prefix, todo.Suffix)
+	} else {
+		return fmt.Sprintf("%sTODO(%s): %s",
 			todo.Prefix, *todo.Id, todo.Suffix)
 	}
 }
@@ -195,7 +205,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 
 func ListSubcommand() error {
 	return WalkTodosOfDir(".", func(todo Todo) error {
-		fmt.Printf("%v\n", todo)
+		fmt.Printf("%v\n", todo.LogString())
 		return nil
 	})
 }
@@ -229,7 +239,7 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 
 	err := WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.Id == nil {
-			fmt.Printf("%v\n", todo);
+			fmt.Printf("%v\n", todo.LogString());
 
 			fmt.Printf("Do you want to report this? [y/n] ");
 			text, err := reader.ReadString('\n')
@@ -252,7 +262,7 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 				return err
 			}
 
-			fmt.Printf("[REPORTED] %v\n", reportedTodo)
+			fmt.Printf("[REPORTED] %v\n", reportedTodo.LogString())
 
 			reportedTodos = append(reportedTodos, reportedTodo)
 		}
