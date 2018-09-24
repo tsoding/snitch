@@ -12,6 +12,8 @@ import (
 	"regexp"
 	"bytes"
 	"strings"
+	"encoding/json"
+	"strconv"
 )
 
 type Todo struct {
@@ -228,7 +230,13 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 
-	// TODO(#29): ReportTodo doesn't assign the id of reported issue to the original TODO
+	var v map[string]interface{}
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&v); err != nil {
+		return todo, err
+	}
+
+	todo.Id = ref_str("#" + strconv.Itoa(int(v["number"].(float64))))
 
 	return todo, err
 }
