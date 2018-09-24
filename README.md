@@ -37,7 +37,7 @@ $ go run main.go report   # report all unreported TODOs in the current dir
 
 Resides in `$HOME/.snitch/config.ini`
 
-## Format
+### Format
 
 ```ini
 [github]
