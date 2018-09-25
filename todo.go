@@ -207,6 +207,9 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
+	if err != nil {
+		return todo, err
+	}
 	defer resp.Body.Close()
 
 	var v map[string]interface{}
