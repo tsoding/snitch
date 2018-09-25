@@ -96,18 +96,21 @@ func main() {
 		panic(err)
 	}
 
-	// TODO(#16): error results of subcommands are not handled
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
-			listSubcommand()
+			if err = listSubcommand(); err != nil {
+				panic(err)
+			}
 		case "report":
 			if len(os.Args) < 3 {
 				usage()
 				panic("Not enough arguments")
 			}
 			// TODO(#24): GitHub repo is not automatically derived from the git repo
-			reportSubcommand(creds, os.Args[2])
+			if err = reportSubcommand(creds, os.Args[2]); err != nil {
+				panic(err)
+			}
 		default:
 			panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
 		}
