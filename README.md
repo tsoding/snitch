@@ -18,7 +18,7 @@ After that you are supposed to push the new reported TODOs yourself.
 ### Unreported TODO
 
 ```
-// TODO(#46): rewrite this in Rust
+// TODO: rewrite this in Rust
 ```
 
 ### Reported TODO
