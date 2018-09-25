@@ -2,15 +2,15 @@ package main
 
 import (
 	"bufio"
-	"os"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
-	"bytes"
-	"strings"
-	"encoding/json"
 	"strconv"
+	"strings"
 )
 
 type Todo struct {
@@ -51,7 +51,7 @@ func (todo Todo) String() string {
 	}
 }
 
-func (todo Todo)UpdateToFile(outputFilename string) error {
+func (todo Todo) UpdateToFile(outputFilename string) error {
 	inputFile, err := os.Open(todo.Filename)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (todo Todo)UpdateToFile(outputFilename string) error {
 
 	scanner := bufio.NewScanner(inputFile)
 	line := 1
-	
+
 	for scanner.Scan() {
 		text := scanner.Text()
 
@@ -83,7 +83,7 @@ func (todo Todo)UpdateToFile(outputFilename string) error {
 
 		line = line + 1
 	}
-	
+
 	return err
 }
 
@@ -150,7 +150,7 @@ func LineAsTodo(line string) *Todo {
 	return nil
 }
 
-func WalkTodosOfFile(path string, visit func (Todo) error) error {
+func WalkTodosOfFile(path string, visit func(Todo) error) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -181,7 +181,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	return filepath.Walk(dirpath, func(filepath string, info os.FileInfo, err error) error {
 		if !info.IsDir() && !strings.HasPrefix(filepath, ".") {
 			err := WalkTodosOfFile(filepath, visit)
-			
+
 			if err != nil {
 				return err
 			}
@@ -198,12 +198,12 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	var jsonBody = []byte(`{"title": "` + todo.Suffix + `"}`)
 
 	req, err := http.NewRequest(
-		"POST", "https://api.github.com/repos/" + repo + "/issues",
+		"POST", "https://api.github.com/repos/"+repo+"/issues",
 		bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return Todo{}, nil
 	}
-	req.Header.Add("Authorization", "token " + creds.PersonalToken)
+	req.Header.Add("Authorization", "token "+creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)

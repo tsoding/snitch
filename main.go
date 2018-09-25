@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
 	"path"
-	"os/exec"
 )
 
 func ref_str(x string) *string {
@@ -26,12 +26,12 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 
 	err := WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.Id == nil {
-			fmt.Printf("%v\n", todo.LogString());
+			fmt.Printf("%v\n", todo.LogString())
 
-			fmt.Printf("Do you want to report this? [y/n] ");
+			fmt.Printf("Do you want to report this? [y/n] ")
 			text, err := reader.ReadString('\n')
 			for err == nil && text != "y\n" && text != "n\n" {
-				fmt.Printf("Do you want to report this? [y/n] ");
+				fmt.Printf("Do you want to report this? [y/n] ")
 				text, err = reader.ReadString('\n')
 			}
 
@@ -66,7 +66,7 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 		if err != nil {
 			return err
 		}
-		
+
 		err = exec.Command("git", "add", reportedTodo.Filename).Run()
 		if err != nil {
 			return err
