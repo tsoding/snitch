@@ -4,34 +4,30 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
 	"path"
-	"os/exec"
 )
 
-func ref_str(x string) *string {
-	return &x
-}
-
-func ListSubcommand() error {
+func listSubcommand() error {
 	return WalkTodosOfDir(".", func(todo Todo) error {
 		fmt.Printf("%v\n", todo.LogString())
 		return nil
 	})
 }
 
-func ReportSubcommand(creds GithubCredentials, repo string) error {
+func reportSubcommand(creds GithubCredentials, repo string) error {
 	todosToReport := []Todo{}
 	reader := bufio.NewReader(os.Stdin)
 
 	err := WalkTodosOfDir(".", func(todo Todo) error {
-		if todo.Id == nil {
-			fmt.Printf("%v\n", todo.LogString());
+		if todo.ID == nil {
+			fmt.Printf("%v\n", todo.LogString())
 
-			fmt.Printf("Do you want to report this? [y/n] ");
+			fmt.Printf("Do you want to report this? [y/n] ")
 			text, err := reader.ReadString('\n')
 			for err == nil && text != "y\n" && text != "n\n" {
-				fmt.Printf("Do you want to report this? [y/n] ");
+				fmt.Printf("Do you want to report this? [y/n] ")
 				text, err = reader.ReadString('\n')
 			}
 
@@ -66,13 +62,13 @@ func ReportSubcommand(creds GithubCredentials, repo string) error {
 		if err != nil {
 			return err
 		}
-		
+
 		err = exec.Command("git", "add", reportedTodo.Filename).Run()
 		if err != nil {
 			return err
 		}
 
-		err = exec.Command("git", "commit", "-m", reportedTodo.TodoString()).Run()
+		err = exec.Command("git", "commit", "-m", reportedTodo.CommitMessage()).Run()
 		if err != nil {
 			return err
 		}
@@ -104,14 +100,14 @@ func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
-			ListSubcommand()
+			listSubcommand()
 		case "report":
 			if len(os.Args) < 3 {
 				usage()
 				panic("Not enough arguments")
 			}
 			// TODO(#24): GitHub repo is not automatically derived from the git repo
-			ReportSubcommand(creds, os.Args[2])
+			reportSubcommand(creds, os.Args[2])
 		default:
 			panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
 		}

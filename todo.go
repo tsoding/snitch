@@ -2,56 +2,64 @@ package main
 
 import (
 	"bufio"
-	"os"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
-	"bytes"
-	"strings"
-	"encoding/json"
 	"strconv"
+	"strings"
 )
 
+// Todo contains information about a TODO in the repo
 type Todo struct {
 	Prefix   string
 	Suffix   string
-	Id       *string
+	ID       *string
 	Filename string
 	Line     int
 }
 
-func (todo Todo) TodoString() string {
-	if todo.Id == nil {
+// CommitMessage formats a commit message for commiting the TODO
+func (todo Todo) CommitMessage() string {
+	if todo.ID == nil {
 		return fmt.Sprintf("TODO")
-	} else {
-		return fmt.Sprintf("TODO(%s)", *todo.Id)
 	}
+
+	return fmt.Sprintf("TODO(%s)", *todo.ID)
 }
 
+// LogString formats TODO for compilation logging. Format is
+// compatible with Emacs compilation mode, so you can easily jump
+// between the todos.
 func (todo Todo) LogString() string {
-	if todo.Id == nil {
+	if todo.ID == nil {
 		return fmt.Sprintf("%s:%d: %sTODO: %s",
 			todo.Filename, todo.Line,
 			todo.Prefix, todo.Suffix)
-	} else {
-		return fmt.Sprintf("%s:%d: %sTODO(%s): %s",
-			todo.Filename, todo.Line,
-			todo.Prefix, *todo.Id, todo.Suffix)
 	}
+
+	return fmt.Sprintf("%s:%d: %sTODO(%s): %s",
+		todo.Filename, todo.Line,
+		todo.Prefix, *todo.ID, todo.Suffix)
 }
 
 func (todo Todo) String() string {
-	if todo.Id == nil {
+	if todo.ID == nil {
 		return fmt.Sprintf("%sTODO: %s",
 			todo.Prefix, todo.Suffix)
-	} else {
-		return fmt.Sprintf("%sTODO(%s): %s",
-			todo.Prefix, *todo.Id, todo.Suffix)
 	}
+
+	return fmt.Sprintf("%sTODO(%s): %s",
+		todo.Prefix, *todo.ID, todo.Suffix)
 }
 
-func (todo Todo)UpdateToFile(outputFilename string) error {
+// UpdateToFile updates the file where the Todo is located without
+// changing the original file. The newer version of the file is dumped
+// to '<filepath>.snitch' in the same directory.
+func (todo Todo) UpdateToFile(outputFilename string) error {
 	inputFile, err := os.Open(todo.Filename)
 	if err != nil {
 		return err
@@ -71,7 +79,7 @@ func (todo Todo)UpdateToFile(outputFilename string) error {
 
 	scanner := bufio.NewScanner(inputFile)
 	line := 1
-	
+
 	for scanner.Scan() {
 		text := scanner.Text()
 
@@ -83,10 +91,11 @@ func (todo Todo)UpdateToFile(outputFilename string) error {
 
 		line = line + 1
 	}
-	
+
 	return err
 }
 
+// UpdateInPlace updates the file where the Todo is located in-place.
 func (todo Todo) UpdateInPlace() error {
 	outputFilename := todo.Filename + ".snitch"
 	err := todo.UpdateToFile(outputFilename)
@@ -103,7 +112,7 @@ func (todo Todo) UpdateInPlace() error {
 	return err
 }
 
-func LineAsUnreportedTodo(line string) *Todo {
+func lineAsUnreportedTodo(line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
 
@@ -111,7 +120,7 @@ func LineAsUnreportedTodo(line string) *Todo {
 		return &Todo{
 			Prefix:   groups[1],
 			Suffix:   groups[2],
-			Id:       nil,
+			ID:       nil,
 			Filename: "",
 			Line:     0,
 		}
@@ -120,7 +129,7 @@ func LineAsUnreportedTodo(line string) *Todo {
 	return nil
 }
 
-func LineAsReportedTodo(line string) *Todo {
+func lineAsReportedTodo(line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO\\((.*)\\): (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
 
@@ -128,7 +137,7 @@ func LineAsReportedTodo(line string) *Todo {
 		return &Todo{
 			Prefix:   groups[1],
 			Suffix:   groups[3],
-			Id:       &groups[2],
+			ID:       &groups[2],
 			Filename: "",
 			Line:     0,
 		}
@@ -137,20 +146,22 @@ func LineAsReportedTodo(line string) *Todo {
 	return nil
 }
 
+// LineAsTodo constructs a Todo from a string
 func LineAsTodo(line string) *Todo {
 	// TODO(#2): LineAsTodo has false positive result inside of string literals
-	if todo := LineAsUnreportedTodo(line); todo != nil {
+	if todo := lineAsUnreportedTodo(line); todo != nil {
 		return todo
 	}
 
-	if todo := LineAsReportedTodo(line); todo != nil {
+	if todo := lineAsReportedTodo(line); todo != nil {
 		return todo
 	}
 
 	return nil
 }
 
-func WalkTodosOfFile(path string, visit func (Todo) error) error {
+// WalkTodosOfFile visits all of the TODOs in a particular file
+func WalkTodosOfFile(path string, visit func(Todo) error) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -177,11 +188,12 @@ func WalkTodosOfFile(path string, visit func (Todo) error) error {
 	return scanner.Err()
 }
 
+// WalkTodosOfDir visits all of the TODOs in a particular directory
 func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	return filepath.Walk(dirpath, func(filepath string, info os.FileInfo, err error) error {
 		if !info.IsDir() && !strings.HasPrefix(filepath, ".") {
 			err := WalkTodosOfFile(filepath, visit)
-			
+
 			if err != nil {
 				return err
 			}
@@ -191,6 +203,8 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	})
 }
 
+// ReportTodo reports the todo as a Github Issue, updates the file
+// where the todo is located and commits the changes to the git repo.
 func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	client := &http.Client{}
 
@@ -198,15 +212,18 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	var jsonBody = []byte(`{"title": "` + todo.Suffix + `"}`)
 
 	req, err := http.NewRequest(
-		"POST", "https://api.github.com/repos/" + repo + "/issues",
+		"POST", "https://api.github.com/repos/"+repo+"/issues",
 		bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return Todo{}, nil
 	}
-	req.Header.Add("Authorization", "token " + creds.PersonalToken)
+	req.Header.Add("Authorization", "token "+creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
+	if err != nil {
+		return todo, err
+	}
 	defer resp.Body.Close()
 
 	var v map[string]interface{}
@@ -215,7 +232,8 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 		return todo, err
 	}
 
-	todo.Id = ref_str("#" + strconv.Itoa(int(v["number"].(float64))))
+	id := "#" + strconv.Itoa(int(v["number"].(float64)))
+	todo.ID = &id
 
 	return todo, err
 }

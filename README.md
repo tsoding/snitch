@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/tsoding/snitch.svg?branch=master)](https://travis-ci.org/tsoding/snitch)
 # Snitch
 
 A simple tool that collects TODOs in the source code and reports them as GitHub issues.
