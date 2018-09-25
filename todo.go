@@ -209,7 +209,7 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	client := &http.Client{}
 
 	bodyBuffer := new(bytes.Buffer)
-	err := json.NewEncoder(bodyBuffer).Encode(map[string]interface{} {
+	err := json.NewEncoder(bodyBuffer).Encode(map[string]interface{}{
 		"title": todo.Suffix,
 	})
 	if err != nil {
