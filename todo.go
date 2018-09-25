@@ -208,14 +208,19 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	client := &http.Client{}
 
-	// TODO(#28): ReportTodo doesn't use a proper json library to encode json
-	var jsonBody = []byte(`{"title": "` + todo.Suffix + `"}`)
+	bodyBuffer := new(bytes.Buffer)
+	err := json.NewEncoder(bodyBuffer).Encode(map[string]interface{} {
+		"title": todo.Suffix,
+	})
+	if err != nil {
+		return todo, err
+	}
 
 	req, err := http.NewRequest(
 		"POST", "https://api.github.com/repos/"+repo+"/issues",
-		bytes.NewBuffer(jsonBody))
+		bodyBuffer)
 	if err != nil {
-		return Todo{}, nil
+		return todo, nil
 	}
 	req.Header.Add("Authorization", "token "+creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
@@ -227,8 +232,7 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
 	defer resp.Body.Close()
 
 	var v map[string]interface{}
-	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(&v); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
 		return todo, err
 	}
 
