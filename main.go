@@ -16,7 +16,7 @@ func listSubcommand() error {
 	})
 }
 
-func reportSubcommand(creds GithubCredentials, repo string) error {
+func reportSubcommand(creds GithubCredentials, repo string, body string) error {
 	todosToReport := []Todo{}
 	reader := bufio.NewReader(os.Stdin)
 
@@ -50,7 +50,7 @@ func reportSubcommand(creds GithubCredentials, repo string) error {
 	}
 
 	for _, todo := range todosToReport {
-		reportedTodo, err := ReportTodo(todo, creds, repo)
+		reportedTodo, err := ReportTodo(todo, creds, repo, body)
 
 		if err != nil {
 			return err
@@ -81,7 +81,7 @@ func usage() {
 	// TODO(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
 		"\tlist: lists all todos of a dir recursively\n" +
-		"\treport <owner/repo>: reports an issue to github\n")
+		"\treport <owner/repo> [issue-body]: reports all todos of a dir recursively as GitHub issues\n")
 }
 
 func main() {
@@ -107,8 +107,12 @@ func main() {
 				usage()
 				panic("Not enough arguments")
 			}
+			body := ""
+			if len(os.Args) > 3 {
+				body = os.Args[3]
+			}
 			// TODO(#24): GitHub repo is not automatically derived from the git repo
-			if err = reportSubcommand(creds, os.Args[2]); err != nil {
+			if err = reportSubcommand(creds, os.Args[2], body); err != nil {
 				panic(err)
 			}
 		default:

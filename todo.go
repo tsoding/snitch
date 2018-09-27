@@ -205,12 +205,13 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 
 // ReportTodo reports the todo as a Github Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
-func ReportTodo(todo Todo, creds GithubCredentials, repo string) (Todo, error) {
+func ReportTodo(todo Todo, creds GithubCredentials, repo string, body string) (Todo, error) {
 	client := &http.Client{}
 
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(map[string]interface{}{
 		"title": todo.Suffix,
+		"body": body,
 	})
 	if err != nil {
 		return todo, err
