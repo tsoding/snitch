@@ -211,7 +211,7 @@ func ReportTodo(todo Todo, creds GithubCredentials, repo string, body string) (T
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(map[string]interface{}{
 		"title": todo.Suffix,
-		"body": body,
+		"body":  body,
 	})
 	if err != nil {
 		return todo, err
