@@ -148,7 +148,6 @@ func lineAsReportedTodo(line string) *Todo {
 
 // LineAsTodo constructs a Todo from a string
 func LineAsTodo(line string) *Todo {
-	// TODO(#2): LineAsTodo has false positive result inside of string literals
 	if todo := lineAsUnreportedTodo(line); todo != nil {
 		return todo
 	}
