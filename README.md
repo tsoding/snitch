@@ -27,17 +27,17 @@ After that you are supposed to push the new reported TODOs yourself.
 // TODO(#42): rewrite this in Rust
 ```
 
-## Build
+## Installation
 
 ```console
-$ go build .
+$ go get github.com/tsoding/snitch
 ```
 
 ## Usage
 
 ```console
-$ snitch list                # lists all TODOs in the current dir
-$ snitch report <owner/repo> # report all unreported TODOs in the current dir
+$ snitch list                             # lists all TODOs in the current dir
+$ snitch report <owner/repo> [issue-body] # report all unreported TODOs in the current dir
 ```
 
 ## GitHub Credentials File
