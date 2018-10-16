@@ -148,7 +148,7 @@ func (todo Todo) removeToFile(outputFilename string) error {
 
 // Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
-	// TODO: duplicate code in Todo.Remove() and Todo.Update()
+	// TODO(#57): duplicate code in Todo.Remove() and Todo.Update()
 	outputFilename := todo.Filename + ".snitch"
 	err := todo.removeToFile(outputFilename)
 	if err != nil {
