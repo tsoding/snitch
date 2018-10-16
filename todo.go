@@ -147,6 +147,7 @@ func (todo Todo) removeToFile(outputFilename string) error {
 }
 
 func (todo Todo) Remove() error {
+	// TODO: duplicate code in Todo.Remove() and Todo.Update()
 	outputFilename := todo.Filename + ".snitch"
 	err := todo.removeToFile(outputFilename)
 	if err != nil {
@@ -253,6 +254,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 }
 
 func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
+	// TODO: duplicate code in Todo.RetrieveGithubStatus() and ReportTodo
 	client := &http.Client{}
 	url := "https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:]
 
@@ -283,6 +285,7 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 // ReportTodo reports the todo as a Github Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
 func ReportTodo(todo Todo, creds GithubCredentials, repo string, body string) (Todo, error) {
+	// TODO: ReportTodo is not a Todo method
 	client := &http.Client{}
 
 	bodyBuffer := new(bytes.Buffer)

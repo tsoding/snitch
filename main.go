@@ -41,6 +41,7 @@ func reportSubcommand(creds GithubCredentials, repo string, body string) error {
 		if todo.ID == nil {
 			fmt.Printf("%v\n", todo.LogString())
 
+			// TODO: yOrN is not used in report subcommand
 			fmt.Printf("Do you want to report this? [y/n] ")
 			text, err := reader.ReadString('\n')
 			for err == nil && text != "y\n" && text != "n\n" {
