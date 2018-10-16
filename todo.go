@@ -112,6 +112,58 @@ func (todo Todo) UpdateInPlace() error {
 	return err
 }
 
+func (todo Todo) removeToFile(outputFilename string) error {
+	inputFile, err := os.Open(todo.Filename)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+
+	outputFile, err := os.Create(outputFilename)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cerr := outputFile.Close()
+		if cerr != nil {
+			err = cerr
+		}
+	}()
+
+	scanner := bufio.NewScanner(inputFile)
+	line := 1
+
+	for scanner.Scan() {
+		text := scanner.Text()
+
+		if todo.Line != line {
+			fmt.Fprintln(outputFile, text)
+		}
+
+		line = line + 1
+	}
+
+	return err
+}
+
+// Remove removes the Todo from the file where it is located in-place.
+func (todo Todo) Remove() error {
+	// TODO(#57): duplicate code in Todo.Remove() and Todo.Update()
+	outputFilename := todo.Filename + ".snitch"
+	err := todo.removeToFile(outputFilename)
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(outputFilename, todo.Filename)
+
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 func lineAsUnreportedTodo(line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
@@ -202,9 +254,41 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	})
 }
 
+// RetrieveGithubStatus retrieves the current status of TODOs issue
+// from GitHub
+func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
+	// TODO(#58): duplicate code in Todo.RetrieveGithubStatus() and ReportTodo
+	client := &http.Client{}
+	url := "https://api.github.com/repos/" + repo + "/issues/" + (*todo.ID)[1:]
+
+	req, err := http.NewRequest(
+		// TODO(#59): possible GitHub API injection attack
+		"GET", url,
+		nil)
+
+	if err != nil {
+		return "", nil
+	}
+	req.Header.Add("Authorization", "token "+creds.PersonalToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	var v map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+		return "", err
+	}
+
+	return v["state"].(string), nil
+}
+
 // ReportTodo reports the todo as a Github Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
 func ReportTodo(todo Todo, creds GithubCredentials, repo string, body string) (Todo, error) {
+	// TODO(#60): ReportTodo is not a Todo method
 	client := &http.Client{}
 
 	bodyBuffer := new(bytes.Buffer)

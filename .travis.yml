@@ -4,7 +4,7 @@ go:
 install:
   - go get github.com/tsoding/snitch
   - go get -v .
-  - go get -v github.com/golang/lint/golint
+  - go get -u golang.org/x/lint/golint
 script:
   - diff <(gofmt -d .) <(echo -n)
   - go vet -x ./...
