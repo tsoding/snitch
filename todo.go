@@ -112,6 +112,11 @@ func (todo Todo) UpdateInPlace() error {
 	return err
 }
 
+func (todo Todo) Remove() error {
+	// TODO: Todo.Remove is not implemented
+	return nil
+}
+
 func lineAsUnreportedTodo(line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
@@ -200,6 +205,11 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 
 		return nil
 	})
+}
+
+func (todo Todo) RetrieveGithubStatus(creds GithubCredentials) (string, error) {
+	// TODO: RetrieveGithubStatus is not implemented
+	return "closed", nil
 }
 
 // ReportTodo reports the todo as a Github Issue, updates the file
