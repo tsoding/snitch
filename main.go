@@ -121,7 +121,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 				return err
 			}
 		} else {
-			fmt.Printf("[OPEN] %v\n", todo.LogString());
+			fmt.Printf("[OPEN] %v\n", todo.LogString())
 		}
 
 		return err
