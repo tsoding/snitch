@@ -18,3 +18,5 @@
     - create TODOs right in the code for the unfinished work,
     - submit PR with the unfinished work and TODOs,
     - TODOs will be converted to separate issues
+    - **DON'T CREATE ISSUES YOURSELF. JUST LEAVE THE TODOS.** Project
+      Lead is responsible for creating the issues from the TODOs.
