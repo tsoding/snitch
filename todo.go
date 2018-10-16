@@ -112,9 +112,54 @@ func (todo Todo) UpdateInPlace() error {
 	return err
 }
 
+func (todo Todo) removeToFile(outputFilename string) error {
+	inputFile, err := os.Open(todo.Filename)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+
+	outputFile, err := os.Create(outputFilename)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cerr := outputFile.Close()
+		if cerr != nil {
+			err = cerr
+		}
+	}()
+
+	scanner := bufio.NewScanner(inputFile)
+	line := 1
+
+	for scanner.Scan() {
+		text := scanner.Text()
+
+		if todo.Line != line {
+			fmt.Fprintln(outputFile, text)
+		}
+
+		line = line + 1
+	}
+
+	return err
+}
+
 func (todo Todo) Remove() error {
-	// TODO: Todo.Remove is not implemented
-	return nil
+	outputFilename := todo.Filename + ".snitch"
+	err := todo.removeToFile(outputFilename)
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(outputFilename, todo.Filename)
+
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 func lineAsUnreportedTodo(line string) *Todo {
