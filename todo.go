@@ -262,7 +262,7 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 	url := "https://api.github.com/repos/" + repo + "/issues/" + (*todo.ID)[1:]
 
 	req, err := http.NewRequest(
-		// TODO: possible GitHub API injection attack
+		// TODO(#59): possible GitHub API injection attack
 		"GET", url,
 		nil)
 
