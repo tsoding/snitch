@@ -252,9 +252,32 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	})
 }
 
-func (todo Todo) RetrieveGithubStatus(creds GithubCredentials) (string, error) {
-	// TODO: RetrieveGithubStatus is not implemented
-	return "closed", nil
+func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
+	client := &http.Client{}
+	url := "https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:]
+
+	req, err := http.NewRequest(
+		// TODO: possible GitHub API injection attack
+		"GET", url,
+		nil)
+
+	if err != nil {
+		return "", nil
+	}
+	req.Header.Add("Authorization", "token "+creds.PersonalToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	var v map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+		return "", err
+	}
+
+	return v["state"].(string), nil
 }
 
 // ReportTodo reports the todo as a Github Issue, updates the file

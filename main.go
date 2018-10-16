@@ -102,7 +102,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 			return nil
 		}
 
-		status, err := todo.RetrieveGithubStatus(creds);
+		status, err := todo.RetrieveGithubStatus(creds, repo);
 		if err != nil {
 			return err
 		}
@@ -130,6 +130,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 			return err
 		}
 		fmt.Printf("[REMOVED] %v\n", todo)
+		// TODO: removed TODO is not commited to the repo
 	}
 
 	return err
@@ -175,11 +176,12 @@ func main() {
 				panic(err)
 			}
 		case "purge":
-			if len(os.Args) < 2 {
+			if len(os.Args) < 3 {
 				usage()
 				panic("Not enough arguments")
 			}
-			if err = purgeSubcommand(creds, os.Args[1]); err != nil {
+
+			if err = purgeSubcommand(creds, os.Args[2]); err != nil {
 				panic(err)
 			}
 		default:
