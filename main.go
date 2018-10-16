@@ -130,7 +130,16 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 			return err
 		}
 		fmt.Printf("[REMOVED] %v\n", todo)
-		// TODO: removed TODO is not commited to the repo
+
+		err = exec.Command("git", "add", todo.Filename).Run()
+		if err != nil {
+			return err
+		}
+
+		err = exec.Command("git", "commit", "-m", "Remove " + todo.CommitMessage()).Run()
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
