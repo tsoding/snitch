@@ -257,7 +257,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 // RetrieveGithubStatus retrieves the current status of TODOs issue
 // from GitHub
 func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
-	// TODO: duplicate code in Todo.RetrieveGithubStatus() and ReportTodo
+	// TODO(#58): duplicate code in Todo.RetrieveGithubStatus() and ReportTodo
 	client := &http.Client{}
 	url := "https://api.github.com/repos/" + repo + "/issues/" + (*todo.ID)[1:]
 
