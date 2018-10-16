@@ -146,6 +146,7 @@ func (todo Todo) removeToFile(outputFilename string) error {
 	return err
 }
 
+// Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
 	// TODO: duplicate code in Todo.Remove() and Todo.Update()
 	outputFilename := todo.Filename + ".snitch"
@@ -253,6 +254,8 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	})
 }
 
+// RetrieveGithubStatus retrieves the current status of TODOs issue
+// from GitHub
 func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
 	// TODO: duplicate code in Todo.RetrieveGithubStatus() and ReportTodo
 	client := &http.Client{}
