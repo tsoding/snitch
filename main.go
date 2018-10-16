@@ -109,7 +109,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 		}
 
 		if status == "closed" {
-			fmt.Println(todo.LogString())
+			fmt.Printf("[CLOSED] %v\n", todo.LogString())
 
 			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
 
@@ -120,6 +120,8 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 			if err != nil {
 				return err
 			}
+		} else {
+			fmt.Printf("[OPEN] %v\n", todo.LogString())
 		}
 
 		return err
