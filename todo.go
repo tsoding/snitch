@@ -288,7 +288,7 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 // ReportTodo reports the todo as a Github Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
 func ReportTodo(todo Todo, creds GithubCredentials, repo string, body string) (Todo, error) {
-	// TODO: ReportTodo is not a Todo method
+	// TODO(#60): ReportTodo is not a Todo method
 	client := &http.Client{}
 
 	bodyBuffer := new(bytes.Buffer)
