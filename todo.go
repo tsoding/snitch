@@ -256,7 +256,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
 	// TODO: duplicate code in Todo.RetrieveGithubStatus() and ReportTodo
 	client := &http.Client{}
-	url := "https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:]
+	url := "https://api.github.com/repos/" + repo + "/issues/" + (*todo.ID)[1:]
 
 	req, err := http.NewRequest(
 		// TODO: possible GitHub API injection attack

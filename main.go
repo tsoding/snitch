@@ -103,7 +103,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 			return nil
 		}
 
-		status, err := todo.RetrieveGithubStatus(creds, repo);
+		status, err := todo.RetrieveGithubStatus(creds, repo)
 		if err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 			return err
 		}
 
-		err = exec.Command("git", "commit", "-m", "Remove " + todo.CommitMessage()).Run()
+		err = exec.Command("git", "commit", "-m", "Remove "+todo.CommitMessage()).Run()
 		if err != nil {
 			return err
 		}
