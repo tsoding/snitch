@@ -38,6 +38,7 @@ $ go get github.com/tsoding/snitch
 ```console
 $ snitch list                             # lists all TODOs in the current dir
 $ snitch report <owner/repo> [issue-body] # report all unreported TODOs in the current dir
+$ snitch purge <owner/repo>               # remove TODOs that refer to closed issues
 ```
 
 ## GitHub Credentials File
