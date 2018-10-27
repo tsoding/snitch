@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/user"
 	"path"
 )
@@ -70,12 +69,7 @@ func reportSubcommand(creds GithubCredentials, repo string, body string) error {
 			return err
 		}
 
-		err = exec.Command("git", "add", reportedTodo.Filename).Run()
-		if err != nil {
-			return err
-		}
-
-		err = exec.Command("git", "commit", "-m", reportedTodo.CommitMessage()).Run()
+		err = reportedTodo.GitCommit("Add")
 		if err != nil {
 			return err
 		}
@@ -123,13 +117,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 		}
 		fmt.Printf("[REMOVED] %v\n", todo)
 
-		// TODO(#71): git commit operation could be extracted into separate function and reused across subcommands
-		err = exec.Command("git", "add", todo.Filename).Run()
-		if err != nil {
-			return err
-		}
-
-		err = exec.Command("git", "commit", "-m", "Remove "+todo.CommitMessage()).Run()
+		err = todo.GitCommit("Remove")
 		if err != nil {
 			return err
 		}
