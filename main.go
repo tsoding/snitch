@@ -123,7 +123,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 		}
 		fmt.Printf("[REMOVED] %v\n", todo)
 
-		// TODO: git commit operation could be extracted into separate function and reused across subcommands
+		// TODO(#71): git commit operation could be extracted into separate function and reused across subcommands
 		err = exec.Command("git", "add", todo.Filename).Run()
 		if err != nil {
 			return err
