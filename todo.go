@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -20,15 +21,6 @@ type Todo struct {
 	ID       *string
 	Filename string
 	Line     int
-}
-
-// CommitMessage formats a commit message for commiting the TODO
-func (todo Todo) CommitMessage() string {
-	if todo.ID == nil {
-		return fmt.Sprintf("TODO")
-	}
-
-	return fmt.Sprintf("TODO(%s)", *todo.ID)
 }
 
 // LogString formats TODO for compilation logging. Format is
@@ -162,6 +154,23 @@ func (todo Todo) Remove() error {
 	}
 
 	return err
+}
+
+// GitCommit commits the Todo location to the git repo
+func (todo Todo) GitCommit(prefix string) error {
+	if todo.ID == nil {
+		panic(fmt.Sprintf("Trying to commit an unreported TODO! %v", todo))
+	}
+
+	if err := exec.Command("git", "add", todo.Filename).Run(); err != nil {
+		return err
+	}
+
+	if err := exec.Command("git", "commit", "-m", fmt.Sprintf("%s TODO(%s)", prefix, *todo.ID)).Run(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func lineAsUnreportedTodo(line string) *Todo {
