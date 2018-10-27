@@ -35,29 +35,18 @@ func listSubcommand() error {
 
 func reportSubcommand(creds GithubCredentials, repo string, body string) error {
 	todosToReport := []Todo{}
-	reader := bufio.NewReader(os.Stdin)
 
 	err := WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
 			fmt.Printf("%v\n", todo.LogString())
 
-			// TODO(#56): yOrN is not used in report subcommand
-			fmt.Printf("Do you want to report this? [y/n] ")
-			text, err := reader.ReadString('\n')
-			for err == nil && text != "y\n" && text != "n\n" {
-				fmt.Printf("Do you want to report this? [y/n] ")
-				text, err = reader.ReadString('\n')
+			yes, err := yOrN("Do you want to report this? ")
+
+			if yes {
+				todosToReport = append(todosToReport, todo)
 			}
 
-			if err != nil {
-				return err
-			}
-
-			if text == "n\n" {
-				return nil
-			}
-
-			todosToReport = append(todosToReport, todo)
+			return err
 		}
 
 		return nil
@@ -134,6 +123,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 		}
 		fmt.Printf("[REMOVED] %v\n", todo)
 
+		// TODO(#71): git commit operation could be extracted into separate function and reused across subcommands
 		err = exec.Command("git", "add", todo.Filename).Run()
 		if err != nil {
 			return err
