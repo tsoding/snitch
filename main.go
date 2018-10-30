@@ -67,7 +67,7 @@ func reportSubcommand(creds GithubCredentials, repo string, body string) error {
 
 		fmt.Printf("[REPORTED] %v\n", reportedTodo.LogString())
 
-		err = reportedTodo.UpdateInPlace()
+		err = reportedTodo.Update()
 		if err != nil {
 			return err
 		}
