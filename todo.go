@@ -12,7 +12,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"io"
 )
 
 // Todo contains information about a TODO in the repo
@@ -229,12 +228,14 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	})
 }
 
-// TODO: maybe we should accept json as the body instead of io.Reader
-func QueryGithubApi(creds GithubCredentials, method, url string, body io.Reader) (map[string]interface{}, error) {
+func QueryGithubApi(creds GithubCredentials, method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	client := &http.Client{}
 
+	bodyBuffer := new(bytes.Buffer)
+	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
+
 	req, err := http.NewRequest(
-		method, url, body)
+		method, url, bodyBuffer)
 	if err != nil {
 		return nil, err
 	}
@@ -277,17 +278,14 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 // where the todo is located and commits the changes to the git repo.
 func ReportTodo(todo Todo, creds GithubCredentials, repo string, body string) (Todo, error) {
 	// TODO(#60): ReportTodo is not a Todo method
-	bodyBuffer := new(bytes.Buffer)
-	err := json.NewEncoder(bodyBuffer).Encode(map[string]interface{}{
-		"title": todo.Suffix,
-		"body":  body,
-	})
-
 	json, err := QueryGithubApi(
 		creds,
 		"POST",
 		"https://api.github.com/repos/"+repo+"/issues",
-		bodyBuffer)
+		map[string]interface{}{
+			"title": todo.Suffix,
+			"body":  body,
+		})
 
 	id := "#" + strconv.Itoa(int(json["number"].(float64)))
 	todo.ID = &id
