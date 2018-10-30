@@ -85,7 +85,7 @@ func (todo Todo) UpdateToFile(outputFilename string, lineCallback func(int, stri
 
 func (todo Todo) UpdateInPlace(lineCallback func(int, string) (string, bool)) error {
 	outputFilename := todo.Filename + ".snitch"
-	err := todo.UpdateToFile(outputFilename, lineCallback);
+	err := todo.UpdateToFile(outputFilename, lineCallback)
 	if err != nil {
 		return err
 	}
@@ -101,24 +101,24 @@ func (todo Todo) UpdateInPlace(lineCallback func(int, string) (string, bool)) er
 
 // UpdateInPlace updates the file where the Todo is located in-place.
 func (todo Todo) Update() error {
-	return todo.UpdateInPlace(func (lineNumber int, line string) (string, bool) {
+	return todo.UpdateInPlace(func(lineNumber int, line string) (string, bool) {
 		if lineNumber == todo.Line {
 			return todo.String(), false
 		} else {
 			return line, false
 		}
-	});
+	})
 }
 
 // Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
-	return todo.UpdateInPlace(func (lineNumber int, line string) (string, bool) {
+	return todo.UpdateInPlace(func(lineNumber int, line string) (string, bool) {
 		if lineNumber == todo.Line {
 			return "", true
 		} else {
 			return line, false
 		}
-	});
+	})
 }
 
 // GitCommit commits the Todo location to the git repo
