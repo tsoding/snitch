@@ -88,7 +88,7 @@ func (todo Todo) UpdateToFile(outputFilename string) error {
 }
 
 // UpdateInPlace updates the file where the Todo is located in-place.
-func (todo Todo) UpdateInPlace() error {
+func (todo Todo) Update() error {
 	outputFilename := todo.Filename + ".snitch"
 	err := todo.UpdateToFile(outputFilename)
 	if err != nil {
