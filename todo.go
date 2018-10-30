@@ -228,7 +228,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	})
 }
 
-func QueryGithubApi(creds GithubCredentials, method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
+func queryGithubAPI(creds GithubCredentials, method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	client := &http.Client{}
 
 	bodyBuffer := new(bytes.Buffer)
@@ -260,7 +260,7 @@ func QueryGithubApi(creds GithubCredentials, method, url string, jsonBody map[st
 // RetrieveGithubStatus retrieves the current status of TODOs issue
 // from GitHub
 func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
-	json, err := QueryGithubApi(
+	json, err := queryGithubAPI(
 		creds,
 		"GET",
 		// TODO(#59): possible GitHub API injection attack
@@ -278,7 +278,7 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 // where the todo is located and commits the changes to the git repo.
 func ReportTodo(todo Todo, creds GithubCredentials, repo string, body string) (Todo, error) {
 	// TODO(#60): ReportTodo is not a Todo method
-	json, err := QueryGithubApi(
+	json, err := queryGithubAPI(
 		creds,
 		"POST",
 		"https://api.github.com/repos/"+repo+"/issues",
