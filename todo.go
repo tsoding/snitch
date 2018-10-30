@@ -48,10 +48,7 @@ func (todo Todo) String() string {
 		todo.Prefix, *todo.ID, todo.Suffix)
 }
 
-// UpdateToFile updates the file where the Todo is located without
-// changing the original file. The newer version of the file is dumped
-// to '<filepath>.snitch' in the same directory.
-func (todo Todo) UpdateToFile(outputFilename string) error {
+func (todo Todo) UpdateToFile(outputFilename string, lineCallback func(int, string) (string, bool)) error {
 	inputFile, err := os.Open(todo.Filename)
 	if err != nil {
 		return err
@@ -70,18 +67,33 @@ func (todo Todo) UpdateToFile(outputFilename string) error {
 	}()
 
 	scanner := bufio.NewScanner(inputFile)
-	line := 1
+	lineNumber := 1
 
 	for scanner.Scan() {
-		text := scanner.Text()
+		line := scanner.Text()
 
-		if todo.Line == line {
-			fmt.Fprintln(outputFile, todo)
-		} else {
-			fmt.Fprintln(outputFile, text)
+		replace, remove := lineCallback(lineNumber, line)
+		if !remove {
+			fmt.Fprintln(outputFile, replace)
 		}
 
-		line = line + 1
+		lineNumber = lineNumber + 1
+	}
+
+	return err
+}
+
+func (todo Todo) UpdateInPlace(lineCallback func(int, string) (string, bool)) error {
+	outputFilename := todo.Filename + ".snitch"
+	err := todo.UpdateToFile(outputFilename, lineCallback);
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(outputFilename, todo.Filename)
+
+	if err != nil {
+		return err
 	}
 
 	return err
@@ -89,71 +101,24 @@ func (todo Todo) UpdateToFile(outputFilename string) error {
 
 // UpdateInPlace updates the file where the Todo is located in-place.
 func (todo Todo) Update() error {
-	outputFilename := todo.Filename + ".snitch"
-	err := todo.UpdateToFile(outputFilename)
-	if err != nil {
-		return err
-	}
-
-	err = os.Rename(outputFilename, todo.Filename)
-
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-func (todo Todo) removeToFile(outputFilename string) error {
-	inputFile, err := os.Open(todo.Filename)
-	if err != nil {
-		return err
-	}
-	defer inputFile.Close()
-
-	outputFile, err := os.Create(outputFilename)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		cerr := outputFile.Close()
-		if cerr != nil {
-			err = cerr
+	return todo.UpdateInPlace(func (lineNumber int, line string) (string, bool) {
+		if lineNumber == todo.Line {
+			return todo.String(), false
+		} else {
+			return line, false
 		}
-	}()
-
-	scanner := bufio.NewScanner(inputFile)
-	line := 1
-
-	for scanner.Scan() {
-		text := scanner.Text()
-
-		if todo.Line != line {
-			fmt.Fprintln(outputFile, text)
-		}
-
-		line = line + 1
-	}
-
-	return err
+	});
 }
 
 // Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
-	// TODO(#57): duplicate code in Todo.Remove() and Todo.Update()
-	outputFilename := todo.Filename + ".snitch"
-	err := todo.removeToFile(outputFilename)
-	if err != nil {
-		return err
-	}
-
-	err = os.Rename(outputFilename, todo.Filename)
-
-	if err != nil {
-		return err
-	}
-
-	return err
+	return todo.UpdateInPlace(func (lineNumber int, line string) (string, bool) {
+		if lineNumber == todo.Line {
+			return "", true
+		} else {
+			return line, false
+		}
+	});
 }
 
 // GitCommit commits the Todo location to the git repo
