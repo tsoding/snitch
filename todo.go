@@ -48,7 +48,7 @@ func (todo Todo) String() string {
 		todo.Prefix, *todo.ID, todo.Suffix)
 }
 
-func (todo Todo) UpdateToFile(outputFilename string, lineCallback func(int, string) (string, bool)) error {
+func (todo Todo) updateToFile(outputFilename string, lineCallback func(int, string) (string, bool)) error {
 	inputFile, err := os.Open(todo.Filename)
 	if err != nil {
 		return err
@@ -83,9 +83,9 @@ func (todo Todo) UpdateToFile(outputFilename string, lineCallback func(int, stri
 	return err
 }
 
-func (todo Todo) UpdateInPlace(lineCallback func(int, string) (string, bool)) error {
+func (todo Todo) updateInPlace(lineCallback func(int, string) (string, bool)) error {
 	outputFilename := todo.Filename + ".snitch"
-	err := todo.UpdateToFile(outputFilename, lineCallback)
+	err := todo.updateToFile(outputFilename, lineCallback)
 	if err != nil {
 		return err
 	}
@@ -99,25 +99,25 @@ func (todo Todo) UpdateInPlace(lineCallback func(int, string) (string, bool)) er
 	return err
 }
 
-// UpdateInPlace updates the file where the Todo is located in-place.
+// Update updates the file where the Todo is located in-place.
 func (todo Todo) Update() error {
-	return todo.UpdateInPlace(func(lineNumber int, line string) (string, bool) {
+	return todo.updateInPlace(func(lineNumber int, line string) (string, bool) {
 		if lineNumber == todo.Line {
 			return todo.String(), false
-		} else {
-			return line, false
 		}
+
+		return line, false
 	})
 }
 
 // Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
-	return todo.UpdateInPlace(func(lineNumber int, line string) (string, bool) {
+	return todo.updateInPlace(func(lineNumber int, line string) (string, bool) {
 		if lineNumber == todo.Line {
 			return "", true
-		} else {
-			return line, false
 		}
+
+		return line, false
 	})
 }
 
