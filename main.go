@@ -6,19 +6,22 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"strings"
 )
 
 func yOrN(question string) (bool, error) {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Printf("%s [y/n] ", question)
-	text, err := reader.ReadString('\n')
-	for err == nil && text != "y\n" && text != "n\n" {
+	input, err := reader.ReadString('\n')
+	text := strings.TrimSpace(input)
+
+	for err == nil && text != "y" && text != "n" {
 		fmt.Printf("%s [y/n] ", question)
 		text, err = reader.ReadString('\n')
 	}
 
-	if err != nil || text == "n\n" {
+	if err != nil || text == "n" {
 		return false, err
 	}
 
