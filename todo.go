@@ -264,7 +264,7 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 		creds,
 		"GET",
 		// TODO(#59): possible GitHub API injection attack
-		"https://api.github.com/repos/" + repo + "/issues/" + (*todo.ID)[1:],
+		"https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:],
 		nil)
 
 	if err != nil {
