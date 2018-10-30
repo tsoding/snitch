@@ -228,73 +228,66 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	})
 }
 
-// RetrieveGithubStatus retrieves the current status of TODOs issue
-// from GitHub
-func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
-	// TODO(#58): duplicate code in Todo.RetrieveGithubStatus() and ReportTodo
+func queryGithubAPI(creds GithubCredentials, method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	client := &http.Client{}
-	url := "https://api.github.com/repos/" + repo + "/issues/" + (*todo.ID)[1:]
+
+	bodyBuffer := new(bytes.Buffer)
+	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
 
 	req, err := http.NewRequest(
-		// TODO(#59): possible GitHub API injection attack
-		"GET", url,
-		nil)
-
+		method, url, bodyBuffer)
 	if err != nil {
-		return "", nil
+		return nil, err
 	}
+
 	req.Header.Add("Authorization", "token "+creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	defer resp.Body.Close()
 
 	var v map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
+		return nil, err
+	}
+
+	return v, err
+}
+
+// RetrieveGithubStatus retrieves the current status of TODOs issue
+// from GitHub
+func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
+	json, err := queryGithubAPI(
+		creds,
+		"GET",
+		// TODO(#59): possible GitHub API injection attack
+		"https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:],
+		nil)
+
+	if err != nil {
 		return "", err
 	}
 
-	return v["state"].(string), nil
+	return json["state"].(string), nil
 }
 
 // ReportTodo reports the todo as a Github Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
 func ReportTodo(todo Todo, creds GithubCredentials, repo string, body string) (Todo, error) {
 	// TODO(#60): ReportTodo is not a Todo method
-	client := &http.Client{}
+	json, err := queryGithubAPI(
+		creds,
+		"POST",
+		"https://api.github.com/repos/"+repo+"/issues",
+		map[string]interface{}{
+			"title": todo.Suffix,
+			"body":  body,
+		})
 
-	bodyBuffer := new(bytes.Buffer)
-	err := json.NewEncoder(bodyBuffer).Encode(map[string]interface{}{
-		"title": todo.Suffix,
-		"body":  body,
-	})
-	if err != nil {
-		return todo, err
-	}
-
-	req, err := http.NewRequest(
-		"POST", "https://api.github.com/repos/"+repo+"/issues",
-		bodyBuffer)
-	if err != nil {
-		return todo, nil
-	}
-	req.Header.Add("Authorization", "token "+creds.PersonalToken)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return todo, err
-	}
-	defer resp.Body.Close()
-
-	var v map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
-		return todo, err
-	}
-
-	id := "#" + strconv.Itoa(int(v["number"].(float64)))
+	id := "#" + strconv.Itoa(int(json["number"].(float64)))
 	todo.ID = &id
 
 	return todo, err
