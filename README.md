@@ -43,7 +43,7 @@ $ snitch purge <owner/repo>               # remove TODOs that refer to closed is
 
 ## GitHub Credentials File
 
-Resides in `$HOME/.snitch/config.ini`
+Resides in `$HOME/.snitch/github.ini`
 
 ### Format
 
