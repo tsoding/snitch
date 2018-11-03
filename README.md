@@ -15,6 +15,9 @@ After that you are supposed to push the new reported TODOs yourself.
 
 ## TODO Format
 
+Keep in mind that Snitch supports only single line TODOs right
+now. For a possible multiline support track issue [#81].
+
 ### Unreported TODO
 
 ```
@@ -57,3 +60,4 @@ Checkout [GitHub Help][personal-token] on how to get the Personal Access Token.
 Make sure to enable full access to private repos. For some reason it's required to post issues.
 
 [personal-token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
+[#81]: https://github.com/tsoding/snitch/issues/81
