@@ -8,6 +8,8 @@ import (
 	"path"
 	"strings"
 	"path/filepath"
+	"gopkg.in/go-ini/ini.v1"
+	"regexp"
 )
 
 func yOrN(question string) (bool, error) {
@@ -158,8 +160,22 @@ func LocateDotGit(dir string) (string, error) {
 }
 
 func RepoFromConfig(configPath string) (string, error) {
-	// TODO: RepoFromConfig is not implemented
-	return "", nil
+	cfg, err := ini.Load(configPath)
+	if err != nil {
+		return "", err
+	}
+
+	originRemote := cfg.Section("remote \"origin\"").Key("url").String();
+	githubRepoRegexp := regexp.MustCompile(
+		"github.com[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
+	groups := githubRepoRegexp.FindStringSubmatch(originRemote)
+
+	if groups != nil {
+		return groups[1]+"/"+groups[2], nil
+	}
+
+	return "", fmt.Errorf("%s does not match %v",
+		originRemote, githubRepoRegexp)
 }
 
 func GetGithubRepo(directory string) (string, error) {
@@ -232,6 +248,8 @@ func main() {
 			if !ok {
 				body = ""
 			}
+
+			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
 
 			if err = reportSubcommand(creds, repo, body); err != nil {
 				panic(err)
