@@ -3,13 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"gopkg.in/go-ini/ini.v1"
 	"os"
 	"os/user"
 	"path"
-	"strings"
 	"path/filepath"
-	"gopkg.in/go-ini/ini.v1"
 	"regexp"
+	"strings"
 )
 
 func yOrN(question string) (bool, error) {
@@ -165,13 +165,13 @@ func RepoFromConfig(configPath string) (string, error) {
 		return "", err
 	}
 
-	originRemote := cfg.Section("remote \"origin\"").Key("url").String();
+	originRemote := cfg.Section("remote \"origin\"").Key("url").String()
 	githubRepoRegexp := regexp.MustCompile(
 		"github.com[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
 	groups := githubRepoRegexp.FindStringSubmatch(originRemote)
 
 	if groups != nil {
-		return groups[1]+"/"+groups[2], nil
+		return groups[1] + "/" + groups[2], nil
 	}
 
 	return "", fmt.Errorf("%s does not match %v",
@@ -188,7 +188,7 @@ func GetGithubRepo(directory string) (string, error) {
 }
 
 func parseParams(args []string) (map[string]string, error) {
-	currentParam := "";
+	currentParam := ""
 	result := map[string]string{}
 
 	for _, arg := range args {
@@ -197,7 +197,7 @@ func parseParams(args []string) (map[string]string, error) {
 				result[currentParam] = ""
 			}
 			currentParam = arg[2:]
-		} else {				// Value
+		} else { // Value
 			if len(currentParam) == 0 {
 				return nil, fmt.Errorf("Value %v is not associated with any flag", arg)
 			} else {
@@ -238,7 +238,7 @@ func main() {
 				panic(err)
 			}
 
-			repo, err := GetGithubRepo(".");
+			repo, err := GetGithubRepo(".")
 
 			if err != nil {
 				panic(err)
