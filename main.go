@@ -156,9 +156,31 @@ func GetGithubRepo(directory string) (string, error) {
 	return RepoFromConfig(path.Join(dotGit, "config"))
 }
 
-func parseParams(args []string) map[string]interface{} {
-	// TODO: parseParams is not implemented
-	return nil
+func parseParams(args []string) (map[string]string, error) {
+	currentParam := "";
+	result := map[string]string{}
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--") { // Flag
+			if len(currentParam) != 0 {
+				result[currentParam] = ""
+			}
+			currentParam = arg[2:]
+		} else {				// Value
+			if len(currentParam) == 0 {
+				return nil, fmt.Errorf("Value %v is not associated with any flag", arg)
+			} else {
+				result[currentParam] = arg
+				currentParam = ""
+			}
+		}
+	}
+
+	if len(currentParam) != 0 {
+		result[currentParam] = ""
+	}
+
+	return result, nil
 }
 
 func main() {
@@ -180,16 +202,23 @@ func main() {
 				panic(err)
 			}
 		case "report":
-			params := parseParams(os.Args[2:]);
+			params, err := parseParams(os.Args[2:])
+			if err != nil {
+				panic(err)
+			}
+
 			repo, err := GetGithubRepo(".");
 
 			if err != nil {
 				panic(err)
 			}
 
-			// TODO: the absence of --body is not checked
+			body, ok := params["body"]
+			if !ok {
+				body = ""
+			}
 
-			if err = reportSubcommand(creds, repo, params["body"].(string)); err != nil {
+			if err = reportSubcommand(creds, repo, body); err != nil {
 				panic(err)
 			}
 		case "purge":
