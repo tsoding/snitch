@@ -140,7 +140,7 @@ func usage() {
 		"\tpurge <owner/repo>: removes all of the reported TODOs that refer to closed issues\n")
 }
 
-func LocateDotGit(dir string) (string, error) {
+func locateDotGit(dir string) (string, error) {
 	absDir, err := filepath.Abs(dir)
 	if err != nil {
 		return "", err
@@ -156,10 +156,10 @@ func LocateDotGit(dir string) (string, error) {
 		absDir = filepath.Dir(absDir)
 	}
 
-	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo.")
+	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo")
 }
 
-func RepoFromConfig(configPath string) (string, error) {
+func repoFromConfig(configPath string) (string, error) {
 	cfg, err := ini.Load(configPath)
 	if err != nil {
 		return "", err
@@ -178,13 +178,13 @@ func RepoFromConfig(configPath string) (string, error) {
 		originRemote, githubRepoRegexp)
 }
 
-func GetGithubRepo(directory string) (string, error) {
-	dotGit, err := LocateDotGit(directory)
+func getGithubRepo(directory string) (string, error) {
+	dotGit, err := locateDotGit(directory)
 	if err != nil {
 		return "", err
 	}
 
-	return RepoFromConfig(path.Join(dotGit, "config"))
+	return repoFromConfig(path.Join(dotGit, "config"))
 }
 
 func parseParams(args []string) (map[string]string, error) {
@@ -238,7 +238,7 @@ func main() {
 				panic(err)
 			}
 
-			repo, err := GetGithubRepo(".")
+			repo, err := getGithubRepo(".")
 
 			if err != nil {
 				panic(err)
