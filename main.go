@@ -7,6 +7,7 @@ import (
 	"os/user"
 	"path"
 	"strings"
+	"path/filepath"
 )
 
 func yOrN(question string) (bool, error) {
@@ -137,9 +138,23 @@ func usage() {
 		"\tpurge <owner/repo>: removes all of the reported TODOs that refer to closed issues\n")
 }
 
-func TraceDotGit(directory string) (string, error) {
-	// TODO: TraceDotGit is not implemented
-	return "", nil
+func LocateDotGit(dir string) (string, error) {
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", err
+	}
+
+	for absDir != "/" {
+		dotGit := path.Join(absDir, ".git")
+
+		if stat, err := os.Stat(dotGit); !os.IsNotExist(err) && stat.IsDir() {
+			return dotGit, nil
+		}
+
+		absDir = filepath.Dir(absDir)
+	}
+
+	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo.")
 }
 
 func RepoFromConfig(configPath string) (string, error) {
@@ -148,7 +163,7 @@ func RepoFromConfig(configPath string) (string, error) {
 }
 
 func GetGithubRepo(directory string) (string, error) {
-	dotGit, err := TraceDotGit(directory)
+	dotGit, err := LocateDotGit(directory)
 	if err != nil {
 		return "", err
 	}
