@@ -137,6 +137,30 @@ func usage() {
 		"\tpurge <owner/repo>: removes all of the reported TODOs that refer to closed issues\n")
 }
 
+func TraceDotGit(directory string) (string, error) {
+	// TODO: TraceDotGit is not implemented
+	return "", nil
+}
+
+func RepoFromConfig(configPath string) (string, error) {
+	// TODO: RepoFromConfig is not implemented
+	return "", nil
+}
+
+func GetGithubRepo(directory string) (string, error) {
+	dotGit, err := TraceDotGit(directory)
+	if err != nil {
+		return "", err
+	}
+
+	return RepoFromConfig(path.Join(dotGit, "config"))
+}
+
+func parseParams(args []string) map[string]interface{} {
+	// TODO: parseParams is not implemented
+	return nil
+}
+
 func main() {
 	usr, err := user.Current()
 	if err != nil {
@@ -156,16 +180,16 @@ func main() {
 				panic(err)
 			}
 		case "report":
-			if len(os.Args) < 3 {
-				usage()
-				panic("Not enough arguments")
+			params := parseParams(os.Args[2:]);
+			repo, err := GetGithubRepo(".");
+
+			if err != nil {
+				panic(err)
 			}
-			body := ""
-			if len(os.Args) > 3 {
-				body = os.Args[3]
-			}
-			// TODO(#24): GitHub repo is not automatically derived from the git repo
-			if err = reportSubcommand(creds, os.Args[2], body); err != nil {
+
+			// TODO: the absence of --body is not checked
+
+			if err = reportSubcommand(creds, repo, params["body"].(string)); err != nil {
 				panic(err)
 			}
 		case "purge":
