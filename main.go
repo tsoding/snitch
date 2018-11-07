@@ -136,7 +136,7 @@ func usage() {
 	// TODO(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
 		"\tlist: lists all todos of a dir recursively\n" +
-		"\treport <owner/repo> [issue-body]: reports all todos of a dir recursively as GitHub issues\n" +
+		"\treport [--body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
 		"\tpurge <owner/repo>: removes all of the reported TODOs that refer to closed issues\n")
 }
 
@@ -260,6 +260,7 @@ func main() {
 				panic("Not enough arguments")
 			}
 
+			// TODO: snitch purge does not automatically detect GitHub repo
 			if err = purgeSubcommand(creds, os.Args[2]); err != nil {
 				panic(err)
 			}
