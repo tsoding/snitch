@@ -200,10 +200,10 @@ func parseParams(args []string) (map[string]string, error) {
 		} else { // Value
 			if len(currentParam) == 0 {
 				return nil, fmt.Errorf("Value %v is not associated with any flag", arg)
-			} else {
-				result[currentParam] = arg
-				currentParam = ""
 			}
+
+			result[currentParam] = arg
+			currentParam = ""
 		}
 	}
 
