@@ -260,7 +260,7 @@ func main() {
 				panic("Not enough arguments")
 			}
 
-			// TODO: snitch purge does not automatically detect GitHub repo
+			// TODO(#85): snitch purge does not automatically detect GitHub repo
 			if err = purgeSubcommand(creds, os.Args[2]); err != nil {
 				panic(err)
 			}
