@@ -3,9 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"gopkg.in/go-ini/ini.v1"
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -133,8 +136,82 @@ func usage() {
 	// TODO(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
 		"\tlist: lists all todos of a dir recursively\n" +
-		"\treport <owner/repo> [issue-body]: reports all todos of a dir recursively as GitHub issues\n" +
+		"\treport [--body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
 		"\tpurge <owner/repo>: removes all of the reported TODOs that refer to closed issues\n")
+}
+
+func locateDotGit(dir string) (string, error) {
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", err
+	}
+
+	for absDir != "/" {
+		dotGit := path.Join(absDir, ".git")
+
+		if stat, err := os.Stat(dotGit); !os.IsNotExist(err) && stat.IsDir() {
+			return dotGit, nil
+		}
+
+		absDir = filepath.Dir(absDir)
+	}
+
+	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo")
+}
+
+func repoFromConfig(configPath string) (string, error) {
+	cfg, err := ini.Load(configPath)
+	if err != nil {
+		return "", err
+	}
+
+	originRemote := cfg.Section("remote \"origin\"").Key("url").String()
+	githubRepoRegexp := regexp.MustCompile(
+		"github.com[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
+	groups := githubRepoRegexp.FindStringSubmatch(originRemote)
+
+	if groups != nil {
+		return groups[1] + "/" + groups[2], nil
+	}
+
+	return "", fmt.Errorf("%s does not match %v",
+		originRemote, githubRepoRegexp)
+}
+
+func getGithubRepo(directory string) (string, error) {
+	dotGit, err := locateDotGit(directory)
+	if err != nil {
+		return "", err
+	}
+
+	return repoFromConfig(path.Join(dotGit, "config"))
+}
+
+func parseParams(args []string) (map[string]string, error) {
+	currentParam := ""
+	result := map[string]string{}
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--") { // Flag
+			if len(currentParam) != 0 {
+				result[currentParam] = ""
+			}
+			currentParam = arg[2:]
+		} else { // Value
+			if len(currentParam) == 0 {
+				return nil, fmt.Errorf("Value %v is not associated with any flag", arg)
+			}
+
+			result[currentParam] = arg
+			currentParam = ""
+		}
+	}
+
+	if len(currentParam) != 0 {
+		result[currentParam] = ""
+	}
+
+	return result, nil
 }
 
 func main() {
@@ -156,16 +233,25 @@ func main() {
 				panic(err)
 			}
 		case "report":
-			if len(os.Args) < 3 {
-				usage()
-				panic("Not enough arguments")
+			params, err := parseParams(os.Args[2:])
+			if err != nil {
+				panic(err)
 			}
-			body := ""
-			if len(os.Args) > 3 {
-				body = os.Args[3]
+
+			repo, err := getGithubRepo(".")
+
+			if err != nil {
+				panic(err)
 			}
-			// TODO(#24): GitHub repo is not automatically derived from the git repo
-			if err = reportSubcommand(creds, os.Args[2], body); err != nil {
+
+			body, ok := params["body"]
+			if !ok {
+				body = ""
+			}
+
+			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
+
+			if err = reportSubcommand(creds, repo, body); err != nil {
 				panic(err)
 			}
 		case "purge":
@@ -174,6 +260,7 @@ func main() {
 				panic("Not enough arguments")
 			}
 
+			// TODO(#85): snitch purge does not automatically detect GitHub repo
 			if err = purgeSubcommand(creds, os.Args[2]); err != nil {
 				panic(err)
 			}
