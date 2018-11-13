@@ -226,6 +226,11 @@ func main() {
 		panic(err)
 	}
 
+	repo, err := getGithubRepo(".")
+	if err != nil {
+		panic(err)
+	}
+
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
@@ -234,12 +239,6 @@ func main() {
 			}
 		case "report":
 			params, err := parseParams(os.Args[2:])
-			if err != nil {
-				panic(err)
-			}
-
-			repo, err := getGithubRepo(".")
-
 			if err != nil {
 				panic(err)
 			}
@@ -255,13 +254,7 @@ func main() {
 				panic(err)
 			}
 		case "purge":
-			if len(os.Args) < 3 {
-				usage()
-				panic("Not enough arguments")
-			}
-
-			// TODO(#85): snitch purge does not automatically detect GitHub repo
-			if err = purgeSubcommand(creds, os.Args[2]); err != nil {
+			if err = purgeSubcommand(creds, repo); err != nil {
 				panic(err)
 			}
 		default:
