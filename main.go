@@ -85,17 +85,17 @@ func reportSubcommand(creds GithubCredentials, repo string, body string) error {
 	return err
 }
 
-type RemoveOrder []Todo
+type removeOrder []Todo
 
-func (ro RemoveOrder) Len() int {
+func (ro removeOrder) Len() int {
 	return len(ro)
 }
 
-func (ro RemoveOrder) Swap(i, j int) {
+func (ro removeOrder) Swap(i, j int) {
 	ro[i], ro[j] = ro[j], ro[i]
 }
 
-func (ro RemoveOrder) Less(i, j int) bool {
+func (ro removeOrder) Less(i, j int) bool {
 	if ro[i].Filename == ro[j].Filename {
 		return ro[i].Line > ro[j].Line
 	}
@@ -135,7 +135,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 		return err
 	})
 
-	sort.Sort(RemoveOrder(todosToRemove))
+	sort.Sort(removeOrder(todosToRemove))
 
 	for _, todo := range todosToRemove {
 		err = todo.Remove()
