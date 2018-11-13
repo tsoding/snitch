@@ -9,8 +9,8 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"sort"
+	"strings"
 )
 
 func yOrN(question string) (bool, error) {
