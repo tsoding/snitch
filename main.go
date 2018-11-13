@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sort"
 )
 
 func yOrN(question string) (bool, error) {
@@ -84,6 +85,24 @@ func reportSubcommand(creds GithubCredentials, repo string, body string) error {
 	return err
 }
 
+type RemoveOrder []Todo
+
+func (ro RemoveOrder) Len() int {
+	return len(ro)
+}
+
+func (ro RemoveOrder) Swap(i, j int) {
+	ro[i], ro[j] = ro[j], ro[i]
+}
+
+func (ro RemoveOrder) Less(i, j int) bool {
+	if ro[i].Filename == ro[j].Filename {
+		return ro[i].Line > ro[j].Line
+	}
+
+	return ro[i].Filename < ro[j].Filename
+}
+
 func purgeSubcommand(creds GithubCredentials, repo string) error {
 	todosToRemove := []Todo{}
 
@@ -115,6 +134,8 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 
 		return err
 	})
+
+	sort.Sort(RemoveOrder(todosToRemove))
 
 	for _, todo := range todosToRemove {
 		err = todo.Remove()
