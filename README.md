@@ -28,7 +28,7 @@ now. For a possible multiline support track issue [#81].
 
 #### Parsing
 
-Regular expression: [^(.*)TODO: (.*)$](https://regex101.com/r/u5lkxf/2)
+Regular expression: `^(.*)TODO: (.*)$` [Play](https://regex101.com/r/u5lkxf/2)
 
 Capture Groups:
 - Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
@@ -44,7 +44,7 @@ Capture Groups:
 
 #### Parsing
 
-Regular expression: [^(.*)TODO\((.*)\): (.*)$](https://regex101.com/r/5U6rjS/1)
+Regular expression: `^(.*)TODO\((.*)\): (.*)$` [Play](https://regex101.com/r/5U6rjS/1)
 
 Capture Groups:
 - Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
