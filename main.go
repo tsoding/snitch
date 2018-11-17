@@ -117,12 +117,12 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 		return err
 	})
 
-	sort.Slice(todosToRemove, func(i, j int) {
-		if todotsToRemove[i].Filename == todotsToRemove[j].Filename {
-			return todotsToRemove[i].Line > todotsToRemove[j].Line
+	sort.Slice(todosToRemove, func(i, j int) bool {
+		if todosToRemove[i].Filename == todosToRemove[j].Filename {
+			return todosToRemove[i].Line > todosToRemove[j].Line
 		}
 
-		return todotsToRemove[i].Filename < todotsToRemove[j].Filename
+		return todosToRemove[i].Filename < todosToRemove[j].Filename
 	})
 
 	for _, todo := range todosToRemove {
