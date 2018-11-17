@@ -20,15 +20,36 @@ now. For a possible multiline support track issue [#81].
 
 ### Unreported TODO
 
+#### Example
+
 ```
 // TODO: rewrite this in Rust
 ```
 
+#### Parsing
+
+Regular expression: [^(.*)TODO: (.*)$](https://regex101.com/r/u5lkxf/2)
+
+Capture Groups:
+- Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
+- Group 2: **Suffix**. Used as the title of the issue.
+
 ### Reported TODO
+
+#### Example
 
 ```
 // TODO(#42): rewrite this in Rust
 ```
+
+#### Parsing
+
+Regular expression: [^(.*)TODO\((.*)\): (.*)$](https://regex101.com/r/5U6rjS/1)
+
+Capture Groups:
+- Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
+- Group 2: **ID**. The number of the Issue.
+- Group 3: **Suffix**. Used as the title of the issue.
 
 ## Installation
 
