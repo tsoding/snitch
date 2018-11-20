@@ -8,10 +8,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 // Todo contains information about a TODO in the repo
@@ -216,17 +214,27 @@ func WalkTodosOfFile(path string, visit func(Todo) error) error {
 
 // WalkTodosOfDir visits all of the TODOs in a particular directory
 func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
-	return filepath.Walk(dirpath, func(filepath string, info os.FileInfo, err error) error {
-		if !info.IsDir() && !strings.HasPrefix(filepath, ".") {
-			err := WalkTodosOfFile(filepath, visit)
+	cmd := exec.Command("git", "ls-files", ".")
+	var outb bytes.Buffer
+	cmd.Stdout = &outb
 
-			if err != nil {
-				return err
-			}
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(&outb)
+
+	for scanner.Scan() {
+		filepath := scanner.Text()
+		fmt.Println(filepath)
+		err = WalkTodosOfFile(filepath, visit)
+		if err != nil {
+			return err
 		}
+	}
 
-		return nil
-	})
+	return err
 }
 
 func queryGithubAPI(creds GithubCredentials, method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
