@@ -214,7 +214,7 @@ func WalkTodosOfFile(path string, visit func(Todo) error) error {
 
 // WalkTodosOfDir visits all of the TODOs in a particular directory
 func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
-	cmd := exec.Command("git", "ls-files", ".")
+	cmd := exec.Command("git", "ls-files", dirpath)
 	var outb bytes.Buffer
 	cmd.Stdout = &outb
 
