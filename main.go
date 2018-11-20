@@ -174,17 +174,30 @@ func repoFromConfig(configPath string) (string, error) {
 		return "", err
 	}
 
-	originRemote := cfg.Section("remote \"origin\"").Key("url").String()
+	origin := cfg.Section("remote \"origin\"");
+	if origin != nil {
+		return "", fmt.Errorf("The git repo doesn't have any origin remote. " +
+			"Please use `git remote add' command to add one.")
+	}
+
+	url := origin.Key("url")
+	if url != nil {
+		return "", fmt.Errorf("The origin remote doesn't have any URL's " +
+			"associated with it.")
+	}
+
+	urlString := url.String()
+
 	githubRepoRegexp := regexp.MustCompile(
 		"github.com[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
-	groups := githubRepoRegexp.FindStringSubmatch(originRemote)
+	groups := githubRepoRegexp.FindStringSubmatch(urlString)
 
 	if groups != nil {
 		return groups[1] + "/" + groups[2], nil
 	}
 
 	return "", fmt.Errorf("%s does not match %v",
-		originRemote, githubRepoRegexp)
+		urlString, githubRepoRegexp)
 }
 
 func getGithubRepo(directory string) (string, error) {
