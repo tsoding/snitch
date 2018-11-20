@@ -223,7 +223,7 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 		return err
 	}
 
-	scanner := bufio.NewScanner(&outb);
+	scanner := bufio.NewScanner(&outb)
 
 	for scanner.Scan() {
 		filepath := scanner.Text()
