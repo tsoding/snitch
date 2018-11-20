@@ -123,6 +123,7 @@ func (todo Todo) Remove() error {
 
 // GitCommit commits the Todo location to the git repo
 func (todo Todo) GitCommit(prefix string) error {
+	// TODO(#96): there is no way to check that Todo is unreported at compile time
 	if todo.ID == nil {
 		panic(fmt.Sprintf("Trying to commit an unreported TODO! %v", todo))
 	}
