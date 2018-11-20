@@ -174,7 +174,7 @@ func repoFromConfig(configPath string) (string, error) {
 		return "", err
 	}
 
-	origin := cfg.Section("remote \"origin\"");
+	origin := cfg.Section("remote \"origin\"")
 	if origin != nil {
 		return "", fmt.Errorf("The git repo doesn't have any origin remote. " +
 			"Please use `git remote add' command to add one.")
