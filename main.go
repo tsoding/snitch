@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
+	"log"
 	"os"
 	"os/user"
 	"path"
