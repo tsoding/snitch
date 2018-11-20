@@ -227,7 +227,6 @@ func WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 
 	for scanner.Scan() {
 		filepath := scanner.Text()
-		fmt.Println(filepath)
 		err = WalkTodosOfFile(filepath, visit)
 		if err != nil {
 			return err
