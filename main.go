@@ -239,30 +239,30 @@ func parseParams(args []string) (map[string]string, error) {
 func main() {
 	usr, err := user.Current()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	creds, err := GithubCredentialsFromFile(
 		path.Join(usr.HomeDir, ".snitch/github.ini"))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	repo, err := getGithubRepo(".")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
 			if err = listSubcommand(); err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		case "report":
 			params, err := parseParams(os.Args[2:])
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 
 			body, ok := params["body"]
@@ -273,14 +273,14 @@ func main() {
 			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
 
 			if err = reportSubcommand(creds, repo, body); err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		case "purge":
 			if err = purgeSubcommand(creds, repo); err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		default:
-			panic(fmt.Sprintf("`%s` unknown command", os.Args[1]))
+			log.Fatal(fmt.Sprintf("`%s` unknown command", os.Args[1]))
 		}
 	} else {
 		usage()
