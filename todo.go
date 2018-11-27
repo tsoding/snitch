@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"io"
 )
 
 // Todo contains information about a TODO in the repo
@@ -192,10 +193,11 @@ func WalkTodosOfFile(path string, visit func(Todo) error) error {
 	}
 	defer file.Close()
 
-	line := 1
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		todo := LineAsTodo(scanner.Text())
+	reader := bufio.NewReader(file)
+
+	text, _, err := reader.ReadLine()
+	for line := 1; err == nil; line = line + 1 {
+		todo := LineAsTodo(string(text))
 
 		if todo != nil {
 			todo.Filename = path
@@ -206,10 +208,14 @@ func WalkTodosOfFile(path string, visit func(Todo) error) error {
 			}
 		}
 
-		line = line + 1
+		text, _, err = reader.ReadLine()
 	}
 
-	return scanner.Err()
+	if err != io.EOF {
+		return err
+	}
+
+	return nil
 }
 
 // WalkTodosOfDir visits all of the TODOs in a particular directory
