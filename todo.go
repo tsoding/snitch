@@ -5,12 +5,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
-	"io"
 )
 
 // Todo contains information about a TODO in the repo
