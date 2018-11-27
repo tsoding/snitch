@@ -101,6 +101,7 @@ func purgeSubcommand(creds GithubCredentials, repo string) error {
 
 		if status == "closed" {
 			fmt.Printf("[CLOSED] %v\n", todo.LogString())
+			fmt.Printf("Issue link: https://github.com/%s/issues/%s\n", repo, (*todo.ID)[1:])
 
 			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
 
