@@ -239,7 +239,7 @@ func parseParams(args []string) (map[string]string, error) {
 }
 
 func locateProjectConfig(directory string) (string, error) {
-	// TODO: locateProjectConfig is not implemented
+	// TODO(#105): locateProjectConfig is not implemented
 	return directory, nil
 }
 
