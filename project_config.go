@@ -1,7 +1,6 @@
 package main
 
-import (
-)
+import ()
 
 type TitleConfig struct {
 }
@@ -17,7 +16,7 @@ type ProjectConfig struct {
 
 func NewProjectConfig(filePath string) (*ProjectConfig, error) {
 	// TODO: NewProjectConfig() is not implemented
-	return &ProjectConfig {
+	return &ProjectConfig{
 		Title: &TitleConfig{},
 	}, nil
 }
