@@ -142,11 +142,12 @@ func (todo Todo) GitCommit(prefix string) error {
 func lineAsUnreportedTodo(projectConfig ProjectConfig, line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
-	prefix := groups[1]
-	suffix := groups[2]
-	title := projectConfig.Title.Transform(suffix)
 
 	if groups != nil {
+		prefix := groups[1]
+		suffix := groups[2]
+		title := projectConfig.Title.Transform(suffix)
+
 		return &Todo{
 			Prefix:   prefix,
 			Suffix:   suffix,
@@ -163,12 +164,13 @@ func lineAsUnreportedTodo(projectConfig ProjectConfig, line string) *Todo {
 func lineAsReportedTodo(projectConfig ProjectConfig, line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO\\((.*)\\): (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
-	prefix := groups[1]
-	suffix := groups[3]
-	id := groups[2]
-	title := projectConfig.Title.Transform(suffix)
 
 	if groups != nil {
+		prefix := groups[1]
+		suffix := groups[3]
+		id := groups[2]
+		title := projectConfig.Title.Transform(suffix)
+
 		return &Todo{
 			Prefix:   prefix,
 			Suffix:   suffix,
