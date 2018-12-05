@@ -8,7 +8,7 @@ type TitleConfig struct {
 
 // Transform transforms the suffix into the title
 func (titleConfig *TitleConfig) Transform(title string) string {
-	// TODO: TitleConfig.Transform() is not implemented
+	// TODO(#106): TitleConfig.Transform() is not implemented
 	return title
 }
 
