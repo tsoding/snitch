@@ -19,7 +19,7 @@ type ProjectConfig struct {
 
 // NewProjectConfig constructs the ProjectConfig from a YAML file
 func NewProjectConfig(filePath string) (*ProjectConfig, error) {
-	// TODO: NewProjectConfig() is not implemented
+	// TODO(#107): NewProjectConfig() is not implemented
 	return &ProjectConfig{
 		Title: &TitleConfig{},
 	}, nil
