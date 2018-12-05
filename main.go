@@ -33,17 +33,17 @@ func yOrN(question string) (bool, error) {
 	return true, err
 }
 
-func listSubcommand() error {
-	return WalkTodosOfDir(".", func(todo Todo) error {
+func listSubcommand(projectConfig ProjectConfig) error {
+	return WalkTodosOfDir(projectConfig, ".", func(todo Todo) error {
 		fmt.Printf("%v\n", todo.LogString())
 		return nil
 	})
 }
 
-func reportSubcommand(creds GithubCredentials, repo string, body string) error {
+func reportSubcommand(projectConfig ProjectConfig, creds GithubCredentials, repo string, body string) error {
 	todosToReport := []Todo{}
 
-	err := WalkTodosOfDir(".", func(todo Todo) error {
+	err := WalkTodosOfDir(projectConfig, ".", func(todo Todo) error {
 		if todo.ID == nil {
 			fmt.Printf("%v\n", todo.LogString())
 
@@ -86,10 +86,10 @@ func reportSubcommand(creds GithubCredentials, repo string, body string) error {
 	return err
 }
 
-func purgeSubcommand(creds GithubCredentials, repo string) error {
+func purgeSubcommand(projectConfig ProjectConfig, creds GithubCredentials, repo string) error {
 	todosToRemove := []Todo{}
 
-	err := WalkTodosOfDir(".", func(todo Todo) error {
+	err := WalkTodosOfDir(projectConfig, ".", func(todo Todo) error {
 		if todo.ID == nil {
 			return nil
 		}
@@ -238,6 +238,11 @@ func parseParams(args []string) (map[string]string, error) {
 	return result, nil
 }
 
+func locateProjectConfig(directory string) (string, error) {
+	// TODO(#105): locateProjectConfig is not implemented
+	return directory, nil
+}
+
 func main() {
 	usr, err := user.Current()
 	if err != nil {
@@ -255,10 +260,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	projectConfigPath, err := locateProjectConfig(".")
+	if err != nil {
+		log.Fatal(err)
+	}
+	projectConfig, err := NewProjectConfig(projectConfigPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
-			if err = listSubcommand(); err != nil {
+			if err = listSubcommand(*projectConfig); err != nil {
 				log.Fatal(err)
 			}
 		case "report":
@@ -274,11 +288,11 @@ func main() {
 
 			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
 
-			if err = reportSubcommand(creds, repo, body); err != nil {
+			if err = reportSubcommand(*projectConfig, creds, repo, body); err != nil {
 				log.Fatal(err)
 			}
 		case "purge":
-			if err = purgeSubcommand(creds, repo); err != nil {
+			if err = purgeSubcommand(*projectConfig, creds, repo); err != nil {
 				log.Fatal(err)
 			}
 		default:
