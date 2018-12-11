@@ -35,7 +35,7 @@ func (titleConfig *TitleConfig) Transform(title string) string {
 
 // NewTitleConfig constructs a new TitleConfig from a configuration tree
 func NewTitleConfig(v interface{}) (*TitleConfig, error) {
-	// TODO: NewTitleConfig is not implemented
+	// TODO(#113): NewTitleConfig is not implemented
 	return &TitleConfig {
 		TransformRules: []TransformRule{},
 	}, nil
