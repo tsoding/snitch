@@ -238,8 +238,12 @@ func parseParams(args []string) (map[string]string, error) {
 }
 
 func locateProjectConfig(directory string) (string, error) {
-	// TODO(#105): locateProjectConfig is not implemented
-	return directory, nil
+	dotGit, err := locateDotGit(directory)
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(filepath.Dir(dotGit), ".snitch.yaml"), nil
 }
 
 func main() {
