@@ -1,10 +1,10 @@
 package main
 
 import (
-	"regexp"
-	"os"
 	"fmt"
 	"gopkg.in/yaml.v2"
+	"os"
+	"regexp"
 )
 
 // TransformRule defines a title transformation rule
@@ -76,7 +76,7 @@ func NewProjectConfig(filePath string) (*ProjectConfig, error) {
 		return nil, err
 	}
 
-	return &ProjectConfig {
+	return &ProjectConfig{
 		Title: titleConfig,
 	}, nil
 }
