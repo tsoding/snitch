@@ -33,6 +33,7 @@ func (titleConfig *TitleConfig) Transform(title string) string {
 	return title
 }
 
+// NewTitleConfig constructs a new TitleConfig from a configuration tree
 func NewTitleConfig(v interface{}) (*TitleConfig, error) {
 	// TODO: NewTitleConfig is not implemented
 	return nil, nil
