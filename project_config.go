@@ -5,7 +5,7 @@ import (
 )
 
 type TransformRule struct {
-	Match *regexp.Regexp
+	Match   *regexp.Regexp
 	Replace string
 }
 
