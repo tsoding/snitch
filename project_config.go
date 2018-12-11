@@ -4,11 +4,13 @@ import (
 	"regexp"
 )
 
+// TransformRule defines a title transformation rule
 type TransformRule struct {
 	Match   *regexp.Regexp
 	Replace string
 }
 
+// Transform applies a title transformation rule
 func (transformRule *TransformRule) Transform(title string) string {
 	// TODO(#111): TransformRule.Transform()
 	return title
