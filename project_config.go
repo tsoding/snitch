@@ -1,14 +1,32 @@
 package main
 
-import ()
+import (
+	"regexp"
+)
+
+// TransformRule defines a title transformation rule
+type TransformRule struct {
+	Match   *regexp.Regexp
+	Replace string
+}
+
+// Transform applies a title transformation rule
+func (transformRule *TransformRule) Transform(title string) string {
+	// TODO(#111): TransformRule.Transform()
+	return title
+}
 
 // TitleConfig contains project level configuration related to issue titles
 type TitleConfig struct {
+	TransformRules []TransformRule
 }
 
 // Transform transforms the suffix into the title
 func (titleConfig *TitleConfig) Transform(title string) string {
-	// TODO(#106): TitleConfig.Transform() is not implemented
+	for _, rule := range titleConfig.TransformRules {
+		title = rule.Transform(title)
+	}
+
 	return title
 }
 
