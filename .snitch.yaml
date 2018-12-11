@@ -1,5 +1,5 @@
 title:
-  transform:
+  transforms:
     - match: (.*) \*/
       replace: \1
     - match: (.*) \*\}
