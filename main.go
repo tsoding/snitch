@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
-	"log"
 	"os"
 	"os/user"
 	"path"
@@ -246,39 +245,46 @@ func locateProjectConfig(directory string) (string, error) {
 func main() {
 	usr, err := user.Current()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	creds, err := GithubCredentialsFromFile(
 		path.Join(usr.HomeDir, ".snitch/github.ini"))
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	repo, err := getGithubRepo(".")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	projectConfigPath, err := locateProjectConfig(".")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 	projectConfig, err := NewProjectConfig(projectConfigPath)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
 			if err = listSubcommand(*projectConfig); err != nil {
-				log.Fatal(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 		case "report":
 			params, err := parseParams(os.Args[2:])
 			if err != nil {
-				log.Fatal(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 
 			body, ok := params["body"]
@@ -289,14 +295,17 @@ func main() {
 			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
 
 			if err = reportSubcommand(*projectConfig, creds, repo, body); err != nil {
-				log.Fatal(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 		case "purge":
 			if err = purgeSubcommand(*projectConfig, creds, repo); err != nil {
-				log.Fatal(err)
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 		default:
-			log.Fatal(fmt.Sprintf("`%s` unknown command", os.Args[1]))
+			fmt.Fprintf(os.Stderr, "`%s` unknown command\n", os.Args[1])
+			os.Exit(1)
 		}
 	} else {
 		usage()
