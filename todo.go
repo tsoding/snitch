@@ -128,11 +128,11 @@ func (todo Todo) GitCommit(prefix string) error {
 		panic(fmt.Sprintf("Trying to commit an unreported TODO! %v", todo))
 	}
 
-	if err := exec.Command("git", "add", todo.Filename).Run(); err != nil {
+	if err := LogCommand(exec.Command("git", "add", todo.Filename)).Run(); err != nil {
 		return err
 	}
 
-	if err := exec.Command("git", "commit", "-m", fmt.Sprintf("%s TODO(%s)", prefix, *todo.ID)).Run(); err != nil {
+	if err := LogCommand(exec.Command("git", "commit", "-m", fmt.Sprintf("%s TODO(%s)", prefix, *todo.ID))).Run(); err != nil {
 		return err
 	}
 
