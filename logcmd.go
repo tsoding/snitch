@@ -6,16 +6,19 @@ import (
 	"strings"
 )
 
+// LogCmd enables Cmd with logging the executing command
 type LogCmd struct {
 	Cmd *exec.Cmd
 }
 
+// LogCommand constructs *LogCmd from *exec.Cmd
 func LogCommand(cmd *exec.Cmd) *LogCmd {
 	return &LogCmd{
 		Cmd: cmd,
 	}
 }
 
+// Run runs the underlying Cmd logging the CLI of the command
 func (c *LogCmd) Run() error {
 	args := []string{}
 
