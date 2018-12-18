@@ -1,6 +1,6 @@
 title:
   transforms:
     - match: (.*) \*/
-      replace: \1
+      replace: $1
     - match: (.*) \*\}
-      replace: \1
+      replace: $1
