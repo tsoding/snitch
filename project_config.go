@@ -3,6 +3,7 @@ package main
 import (
 	"gopkg.in/yaml.v2"
 	"os"
+	"regexp"
 )
 
 // TransformRule defines a title transformation rule
@@ -13,8 +14,9 @@ type TransformRule struct {
 
 // Transform applies a title transformation rule
 func (transformRule *TransformRule) Transform(title string) string {
-	// TODO(#111): TransformRule.Transform()
-	return title
+	matchRegexp := regexp.MustCompile(transformRule.Match)
+	return string(matchRegexp.ReplaceAll(
+		[]byte(title), []byte(transformRule.Replace)))
 }
 
 // TitleConfig contains project level configuration related to issue titles
