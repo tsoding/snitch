@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
-	"fmt"
 )
 
 type LogCmd struct {
@@ -11,7 +11,7 @@ type LogCmd struct {
 }
 
 func LogCommand(cmd *exec.Cmd) *LogCmd {
-	return &LogCmd {
+	return &LogCmd{
 		Cmd: cmd,
 	}
 }
@@ -21,7 +21,7 @@ func (c *LogCmd) Run() error {
 
 	for _, arg := range c.Cmd.Args {
 		if strings.Contains(arg, " ") {
-			args = append(args, "\"" + arg + "\"")
+			args = append(args, "\""+arg+"\"")
 		} else {
 			args = append(args, arg)
 		}
