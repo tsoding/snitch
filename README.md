@@ -65,6 +65,22 @@ $ snitch report [--body <issue-body>] # report all unreported TODOs in the curre
 $ snitch purge <owner/repo>           # remove TODOs that refer to closed issues
 ```
 
+## Issue Title Transformation
+
+You can apply project local issue title transformations. Create
+`.snich.yaml` file in the root of the project with the following
+content:
+
+```yaml
+title:
+  transforms:
+    - match: (.*) \*/
+      replace: $1
+```
+
+This feature is very useful for removing garbage from the Issue
+Titles. Like `*/` at the end of C comments.
+
 ## GitHub Credentials File
 
 Resides in `$HOME/.snitch/github.ini`
