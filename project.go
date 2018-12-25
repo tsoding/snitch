@@ -1,13 +1,13 @@
 package main
 
 import (
-	"gopkg.in/yaml.v2"
-	"os"
-	"regexp"
 	"bufio"
-	"io"
-	"os/exec"
 	"bytes"
+	"gopkg.in/yaml.v2"
+	"io"
+	"os"
+	"os/exec"
+	"regexp"
 )
 
 // TransformRule defines a title transformation rule
@@ -101,7 +101,7 @@ func (project Project) LineAsTodo(line string) *Todo {
 }
 
 // WalkTodosOfFile visits all of the TODOs in a particular file
-func (project Project) WalkTodosOfFile (path string, visit func(Todo) error) error {
+func (project Project) WalkTodosOfFile(path string, visit func(Todo) error) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func (project Project) WalkTodosOfFile (path string, visit func(Todo) error) err
 }
 
 // WalkTodosOfDir visits all of the TODOs in a particular directory
-func (project Project) WalkTodosOfDir (dirpath string, visit func(todo Todo) error) error {
+func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
 	cmd := exec.Command("git", "ls-files", dirpath)
 	var outb bytes.Buffer
 	cmd.Stdout = &outb

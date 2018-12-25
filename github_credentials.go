@@ -1,10 +1,10 @@
 package main
 
 import (
-	"gopkg.in/go-ini/ini.v1"
-	"net/http"
 	"bytes"
 	"encoding/json"
+	"gopkg.in/go-ini/ini.v1"
+	"net/http"
 )
 
 // GithubCredentials contains PersonalToken for GitHub API authorization
