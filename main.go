@@ -32,17 +32,17 @@ func yOrN(question string) (bool, error) {
 	return true, err
 }
 
-func listSubcommand(projectConfig ProjectConfig) error {
-	return WalkTodosOfDir(projectConfig, ".", func(todo Todo) error {
+func listSubcommand(project Project) error {
+	return project.WalkTodosOfDir(".", func(todo Todo) error {
 		fmt.Printf("%v\n", todo.LogString())
 		return nil
 	})
 }
 
-func reportSubcommand(projectConfig ProjectConfig, creds GithubCredentials, repo string, body string) error {
+func reportSubcommand(project Project, creds GithubCredentials, repo string, body string) error {
 	todosToReport := []Todo{}
 
-	err := WalkTodosOfDir(projectConfig, ".", func(todo Todo) error {
+	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
 			fmt.Printf("%v\n", todo.LogString())
 
@@ -85,10 +85,10 @@ func reportSubcommand(projectConfig ProjectConfig, creds GithubCredentials, repo
 	return err
 }
 
-func purgeSubcommand(projectConfig ProjectConfig, creds GithubCredentials, repo string) error {
+func purgeSubcommand(project Project, creds GithubCredentials, repo string) error {
 	todosToRemove := []Todo{}
 
-	err := WalkTodosOfDir(projectConfig, ".", func(todo Todo) error {
+	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
 			return nil
 		}
@@ -237,7 +237,7 @@ func parseParams(args []string) (map[string]string, error) {
 	return result, nil
 }
 
-func locateProjectConfig(directory string) (string, error) {
+func locateProject(directory string) (string, error) {
 	dotGit, err := locateDotGit(directory)
 	if err != nil {
 		return "", err
@@ -266,12 +266,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	projectConfigPath, err := locateProjectConfig(".")
+	projectPath, err := locateProject(".")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	projectConfig, err := NewProjectConfig(projectConfigPath)
+	project, err := NewProject(projectPath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -280,7 +280,7 @@ func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
-			if err = listSubcommand(*projectConfig); err != nil {
+			if err = listSubcommand(*project); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
@@ -298,12 +298,12 @@ func main() {
 
 			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
 
-			if err = reportSubcommand(*projectConfig, creds, repo, body); err != nil {
+			if err = reportSubcommand(*project, creds, repo, body); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 		case "purge":
-			if err = purgeSubcommand(*projectConfig, creds, repo); err != nil {
+			if err = purgeSubcommand(*project, creds, repo); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
