@@ -21,6 +21,7 @@ type Todo struct {
 	Filename string
 	Line     int
 	Title    string
+	Body     []string
 }
 
 // LogString formats TODO for compilation logging. Format is
@@ -139,14 +140,14 @@ func (todo Todo) GitCommit(prefix string) error {
 	return nil
 }
 
-func lineAsUnreportedTodo(projectConfig ProjectConfig, line string) *Todo {
+func lineAsUnreportedTodo(project Project, line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
 
 	if groups != nil {
 		prefix := groups[1]
 		suffix := groups[2]
-		title := projectConfig.Title.Transform(suffix)
+		title := project.Title.Transform(suffix)
 
 		return &Todo{
 			Prefix:   prefix,
@@ -161,7 +162,7 @@ func lineAsUnreportedTodo(projectConfig ProjectConfig, line string) *Todo {
 	return nil
 }
 
-func lineAsReportedTodo(projectConfig ProjectConfig, line string) *Todo {
+func lineAsReportedTodo(project Project, line string) *Todo {
 	unreportedTodo := regexp.MustCompile("^(.*)TODO\\((.*)\\): (.*)$")
 	groups := unreportedTodo.FindStringSubmatch(line)
 
@@ -169,7 +170,7 @@ func lineAsReportedTodo(projectConfig ProjectConfig, line string) *Todo {
 		prefix := groups[1]
 		suffix := groups[3]
 		id := groups[2]
-		title := projectConfig.Title.Transform(suffix)
+		title := project.Title.Transform(suffix)
 
 		return &Todo{
 			Prefix:   prefix,
@@ -185,12 +186,12 @@ func lineAsReportedTodo(projectConfig ProjectConfig, line string) *Todo {
 }
 
 // LineAsTodo constructs a Todo from a string
-func LineAsTodo(projectConfig ProjectConfig, line string) *Todo {
-	if todo := lineAsUnreportedTodo(projectConfig, line); todo != nil {
+func LineAsTodo(project Project, line string) *Todo {
+	if todo := lineAsUnreportedTodo(project, line); todo != nil {
 		return todo
 	}
 
-	if todo := lineAsReportedTodo(projectConfig, line); todo != nil {
+	if todo := lineAsReportedTodo(project, line); todo != nil {
 		return todo
 	}
 
@@ -198,7 +199,7 @@ func LineAsTodo(projectConfig ProjectConfig, line string) *Todo {
 }
 
 // WalkTodosOfFile visits all of the TODOs in a particular file
-func WalkTodosOfFile(projectConfig ProjectConfig, path string, visit func(Todo) error) error {
+func WalkTodosOfFile(project Project, path string, visit func(Todo) error) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -209,7 +210,7 @@ func WalkTodosOfFile(projectConfig ProjectConfig, path string, visit func(Todo) 
 
 	text, _, err := reader.ReadLine()
 	for line := 1; err == nil; line = line + 1 {
-		todo := LineAsTodo(projectConfig, string(text))
+		todo := LineAsTodo(project, string(text))
 
 		if todo != nil {
 			todo.Filename = path
@@ -231,7 +232,7 @@ func WalkTodosOfFile(projectConfig ProjectConfig, path string, visit func(Todo) 
 }
 
 // WalkTodosOfDir visits all of the TODOs in a particular directory
-func WalkTodosOfDir(projectConfig ProjectConfig, dirpath string, visit func(todo Todo) error) error {
+func WalkTodosOfDir(project Project, dirpath string, visit func(todo Todo) error) error {
 	cmd := exec.Command("git", "ls-files", dirpath)
 	var outb bytes.Buffer
 	cmd.Stdout = &outb
@@ -245,7 +246,7 @@ func WalkTodosOfDir(projectConfig ProjectConfig, dirpath string, visit func(todo
 
 	for scanner.Scan() {
 		filepath := scanner.Text()
-		err = WalkTodosOfFile(projectConfig, filepath, visit)
+		err = WalkTodosOfFile(project, filepath, visit)
 		if err != nil {
 			return err
 		}

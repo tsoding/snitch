@@ -33,15 +33,15 @@ func (titleConfig *TitleConfig) Transform(title string) string {
 	return title
 }
 
-// ProjectConfig contains the project level configuration
-type ProjectConfig struct {
+// Project contains the project level configuration
+type Project struct {
 	Title *TitleConfig
 }
 
-// NewProjectConfig constructs the ProjectConfig from a YAML file
-func NewProjectConfig(filePath string) (*ProjectConfig, error) {
+// NewProject constructs the Project from a YAML file
+func NewProject(filePath string) (*Project, error) {
 	if stat, err := os.Stat(filePath); os.IsNotExist(err) || stat.IsDir() {
-		return &ProjectConfig{
+		return &Project{
 			Title: &TitleConfig{
 				Transforms: []*TransformRule{},
 			},
@@ -55,11 +55,11 @@ func NewProjectConfig(filePath string) (*ProjectConfig, error) {
 	defer configFile.Close()
 
 	yamlDecoder := yaml.NewDecoder(configFile)
-	var projectConfig ProjectConfig
-	err = yamlDecoder.Decode(&projectConfig)
+	var project Project
+	err = yamlDecoder.Decode(&project)
 	if err != nil {
 		return nil, err
 	}
 
-	return &projectConfig, nil
+	return &project, nil
 }
