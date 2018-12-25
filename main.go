@@ -33,7 +33,7 @@ func yOrN(question string) (bool, error) {
 }
 
 func listSubcommand(project Project) error {
-	return WalkTodosOfDir(project, ".", func(todo Todo) error {
+	return project.WalkTodosOfDir(".", func(todo Todo) error {
 		fmt.Printf("%v\n", todo.LogString())
 		return nil
 	})
@@ -42,7 +42,7 @@ func listSubcommand(project Project) error {
 func reportSubcommand(project Project, creds GithubCredentials, repo string, body string) error {
 	todosToReport := []Todo{}
 
-	err := WalkTodosOfDir(project, ".", func(todo Todo) error {
+	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
 			fmt.Printf("%v\n", todo.LogString())
 
@@ -88,7 +88,7 @@ func reportSubcommand(project Project, creds GithubCredentials, repo string, bod
 func purgeSubcommand(project Project, creds GithubCredentials, repo string) error {
 	todosToRemove := []Todo{}
 
-	err := WalkTodosOfDir(project, ".", func(todo Todo) error {
+	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
 			return nil
 		}

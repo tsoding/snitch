@@ -5,11 +5,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
 	"strconv"
 )
 
@@ -138,121 +136,6 @@ func (todo Todo) GitCommit(prefix string) error {
 	}
 
 	return nil
-}
-
-func lineAsUnreportedTodo(project Project, line string) *Todo {
-	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
-	groups := unreportedTodo.FindStringSubmatch(line)
-
-	if groups != nil {
-		prefix := groups[1]
-		suffix := groups[2]
-		title := project.Title.Transform(suffix)
-
-		return &Todo{
-			Prefix:   prefix,
-			Suffix:   suffix,
-			ID:       nil,
-			Filename: "",
-			Line:     0,
-			Title:    title,
-		}
-	}
-
-	return nil
-}
-
-func lineAsReportedTodo(project Project, line string) *Todo {
-	unreportedTodo := regexp.MustCompile("^(.*)TODO\\((.*)\\): (.*)$")
-	groups := unreportedTodo.FindStringSubmatch(line)
-
-	if groups != nil {
-		prefix := groups[1]
-		suffix := groups[3]
-		id := groups[2]
-		title := project.Title.Transform(suffix)
-
-		return &Todo{
-			Prefix:   prefix,
-			Suffix:   suffix,
-			ID:       &id,
-			Filename: "",
-			Line:     0,
-			Title:    title,
-		}
-	}
-
-	return nil
-}
-
-// LineAsTodo constructs a Todo from a string
-func LineAsTodo(project Project, line string) *Todo {
-	if todo := lineAsUnreportedTodo(project, line); todo != nil {
-		return todo
-	}
-
-	if todo := lineAsReportedTodo(project, line); todo != nil {
-		return todo
-	}
-
-	return nil
-}
-
-// WalkTodosOfFile visits all of the TODOs in a particular file
-func WalkTodosOfFile(project Project, path string, visit func(Todo) error) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	reader := bufio.NewReader(file)
-
-	text, _, err := reader.ReadLine()
-	for line := 1; err == nil; line = line + 1 {
-		todo := LineAsTodo(project, string(text))
-
-		if todo != nil {
-			todo.Filename = path
-			todo.Line = line
-
-			if err := visit(*todo); err != nil {
-				return err
-			}
-		}
-
-		text, _, err = reader.ReadLine()
-	}
-
-	if err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// WalkTodosOfDir visits all of the TODOs in a particular directory
-func WalkTodosOfDir(project Project, dirpath string, visit func(todo Todo) error) error {
-	cmd := exec.Command("git", "ls-files", dirpath)
-	var outb bytes.Buffer
-	cmd.Stdout = &outb
-
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	scanner := bufio.NewScanner(&outb)
-
-	for scanner.Scan() {
-		filepath := scanner.Text()
-		err = WalkTodosOfFile(project, filepath, visit)
-		if err != nil {
-			return err
-		}
-	}
-
-	return err
 }
 
 func queryGithubAPI(creds GithubCredentials, method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
