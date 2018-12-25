@@ -12,6 +12,7 @@ type GithubCredentials struct {
 	PersonalToken string
 }
 
+// QueryGithubAPI makes a GitHub API query
 func (creds GithubCredentials) QueryGithubAPI(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	client := &http.Client{}
 
