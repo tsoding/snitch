@@ -2,10 +2,7 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -138,40 +135,10 @@ func (todo Todo) GitCommit(prefix string) error {
 	return nil
 }
 
-func queryGithubAPI(creds GithubCredentials, method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
-	client := &http.Client{}
-
-	bodyBuffer := new(bytes.Buffer)
-	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
-
-	req, err := http.NewRequest(
-		method, url, bodyBuffer)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Authorization", "token "+creds.PersonalToken)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var v map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
-		return nil, err
-	}
-
-	return v, err
-}
-
 // RetrieveGithubStatus retrieves the current status of TODOs issue
 // from GitHub
 func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
-	json, err := queryGithubAPI(
-		creds,
+	json, err := creds.QueryGithubAPI(
 		"GET",
 		// TODO(#59): possible GitHub API injection attack
 		"https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:],
@@ -188,8 +155,7 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 // where the todo is located and commits the changes to the git repo.
 func (todo Todo) ReportTodo(creds GithubCredentials, repo string, body string) (Todo, error) {
 	// TODO(#60): ReportTodo is not a Todo method
-	json, err := queryGithubAPI(
-		creds,
+	json, err := creds.QueryGithubAPI(
 		"POST",
 		"https://api.github.com/repos/"+repo+"/issues",
 		map[string]interface{}{
