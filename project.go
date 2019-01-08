@@ -131,14 +131,14 @@ func (project Project) WalkTodosOfFile(path string, visit func(Todo) error) erro
 
 	text, _, err := reader.ReadLine()
 	for line := 1; err == nil; line = line + 1 {
-		if (todo == nil) {		// LookingForTodo
+		if todo == nil { // LookingForTodo
 			todo = project.LineAsTodo(string(text))
 
-			if todo != nil {	// Switch to CollectingBody
+			if todo != nil { // Switch to CollectingBody
 				todo.Filename = path
 				todo.Line = line
 			}
-		} else {				// CollectingBody
+		} else { // CollectingBody
 			if possibleTodo := project.LineAsTodo(string(text)); possibleTodo != nil {
 				if err := visit(*todo); err != nil {
 					return err
@@ -154,18 +154,18 @@ func (project Project) WalkTodosOfFile(path string, visit func(Todo) error) erro
 					return err
 				}
 
-				todo = nil		// Switch to LookingForTodo
+				todo = nil // Switch to LookingForTodo
 			}
 		}
 
 		text, _, err = reader.ReadLine()
 	}
 
-	if (todo != nil) {
+	if todo != nil {
 		if err := visit(*todo); err != nil {
 			return err
 		}
-		todo = nil		// Switch to LookingForTodo
+		todo = nil // Switch to LookingForTodo
 	}
 
 	if err != io.EOF {
