@@ -39,16 +39,16 @@ func (titleConfig *TitleConfig) Transform(title string) string {
 
 // Project contains the project level configuration
 type Project struct {
-	Title *TitleConfig
+	Title    *TitleConfig
 	Keywords []string
 }
 
 func unreportedTodoRegexp(keyword string) string {
-	return "^(.*)"+regexp.QuoteMeta(keyword)+": (.*)$"
+	return "^(.*)" + regexp.QuoteMeta(keyword) + ": (.*)$"
 }
 
 func reportedTodoRegexp(keyword string) string {
-	return "^(.*)"+regexp.QuoteMeta(keyword)+"\\((.*)\\): (.*)$"
+	return "^(.*)" + regexp.QuoteMeta(keyword) + "\\((.*)\\): (.*)$"
 }
 
 func (project Project) lineAsUnreportedTodo(line string) *Todo {
