@@ -63,7 +63,7 @@ func reportSubcommand(project Project, creds GithubCredentials, repo string, bod
 	}
 
 	for _, todo := range todosToReport {
-		reportedTodo, err := todo.ReportTodo(creds, repo, body)
+		reportedTodo, err := todo.ReportTodo(creds, repo, strings.Join(todo.Body, "\n"))
 
 		if err != nil {
 			return err
