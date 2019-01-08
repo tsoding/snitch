@@ -127,20 +127,45 @@ func (project Project) WalkTodosOfFile(path string, visit func(Todo) error) erro
 
 	reader := bufio.NewReader(file)
 
+	var todo *Todo
+
 	text, _, err := reader.ReadLine()
 	for line := 1; err == nil; line = line + 1 {
-		todo := project.LineAsTodo(string(text))
+		if todo == nil { // LookingForTodo
+			todo = project.LineAsTodo(string(text))
 
-		if todo != nil {
-			todo.Filename = path
-			todo.Line = line
+			if todo != nil { // Switch to CollectingBody
+				todo.Filename = path
+				todo.Line = line
+			}
+		} else { // CollectingBody
+			if possibleTodo := project.LineAsTodo(string(text)); possibleTodo != nil {
+				if err := visit(*todo); err != nil {
+					return err
+				}
 
-			if err := visit(*todo); err != nil {
-				return err
+				todo = possibleTodo // Remain in CollectingBody but for the next todo
+				todo.Filename = path
+				todo.Line = line
+			} else if bodyLine := todo.ParseBodyLine(string(text)); bodyLine != nil {
+				todo.Body = append(todo.Body, *bodyLine)
+			} else {
+				if err := visit(*todo); err != nil {
+					return err
+				}
+
+				todo = nil // Switch to LookingForTodo
 			}
 		}
 
 		text, _, err = reader.ReadLine()
+	}
+
+	if todo != nil {
+		if err := visit(*todo); err != nil {
+			return err
+		}
+		todo = nil // Switch to LookingForTodo
 	}
 
 	if err != io.EOF {

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 )
 
 // Todo contains information about a TODO in the repo
@@ -17,6 +18,7 @@ type Todo struct {
 	Filename string
 	Line     int
 	Title    string
+	Body     []string
 }
 
 // LogString formats TODO for compilation logging. Format is
@@ -45,6 +47,16 @@ func (todo Todo) String() string {
 	return fmt.Sprintf("%s%s(%s): %s",
 		todo.Prefix, todo.Keyword, *todo.ID,
 		todo.Suffix)
+}
+
+// ParseBodyLine strips off the prefix of a body line of the TODO
+func (todo Todo) ParseBodyLine(line string) *string {
+	if strings.HasPrefix(line, todo.Prefix) {
+		bodyLine := strings.TrimPrefix(line, todo.Prefix)
+		return &bodyLine
+	}
+
+	return nil
 }
 
 func (todo Todo) updateToFile(outputFilename string, lineCallback func(int, string) (string, bool)) error {
@@ -111,6 +123,10 @@ func (todo Todo) Update() error {
 
 // Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
+	// TODO(#124): Todo.Remove does not remove the body of the TODO
+	// It should remove both:
+	// - The TODO itself
+	// - The body of the TODO
 	return todo.updateInPlace(func(lineNumber int, line string) (string, bool) {
 		if lineNumber == todo.Line {
 			return "", true

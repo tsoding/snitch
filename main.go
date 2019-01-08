@@ -39,7 +39,7 @@ func listSubcommand(project Project) error {
 	})
 }
 
-func reportSubcommand(project Project, creds GithubCredentials, repo string, body string) error {
+func reportSubcommand(project Project, creds GithubCredentials, repo string, prependBody string) error {
 	todosToReport := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
@@ -63,7 +63,7 @@ func reportSubcommand(project Project, creds GithubCredentials, repo string, bod
 	}
 
 	for _, todo := range todosToReport {
-		reportedTodo, err := todo.ReportTodo(creds, repo, body)
+		reportedTodo, err := todo.ReportTodo(creds, repo, prependBody+"\n"+strings.Join(todo.Body, "\n"))
 
 		if err != nil {
 			return err
@@ -146,7 +146,7 @@ func usage() {
 	// TODO(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
 		"\tlist: lists all todos of a dir recursively\n" +
-		"\treport [--body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
+		"\treport [--prepend-body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
 		"\tpurge <owner/repo>: removes all of the reported TODOs that refer to closed issues\n")
 }
 
@@ -291,14 +291,14 @@ func main() {
 				os.Exit(1)
 			}
 
-			body, ok := params["body"]
+			prependBody, ok := params["prepend-body"]
 			if !ok {
-				body = ""
+				prependBody = ""
 			}
 
 			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
 
-			if err = reportSubcommand(*project, creds, repo, body); err != nil {
+			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
