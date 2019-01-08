@@ -65,7 +65,23 @@ $ snitch report [--body <issue-body>] # report all unreported TODOs in the curre
 $ snitch purge <owner/repo>           # remove TODOs that refer to closed issues
 ```
 
-## Issue Title Transformation
+## .snitch.yaml
+
+### Custom keywords
+
+You don't have to use `TODO` as the keyword of a todo you want to
+"snitch up". The keyword is customizable through `.snitch.yaml`
+config:
+
+```yaml
+keywords:
+  - TODO
+  - FIXME
+  - XXX
+  - "@todo"
+```
+
+### Issue Title Transformation
 
 You can apply project local issue title transformations. Create
 `.snich.yaml` file in the root of the project with the following
