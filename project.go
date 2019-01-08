@@ -65,6 +65,7 @@ func (project Project) lineAsUnreportedTodo(line string) *Todo {
 			return &Todo{
 				Prefix:   prefix,
 				Suffix:   suffix,
+				Keyword:  keyword,
 				ID:       nil,
 				Filename: "",
 				Line:     0,
@@ -90,6 +91,7 @@ func (project Project) lineAsReportedTodo(line string) *Todo {
 			return &Todo{
 				Prefix:   prefix,
 				Suffix:   suffix,
+				Keyword:  keyword,
 				ID:       &id,
 				Filename: "",
 				Line:     0,

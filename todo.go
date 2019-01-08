@@ -12,6 +12,7 @@ import (
 type Todo struct {
 	Prefix   string
 	Suffix   string
+	Keyword  string
 	ID       *string
 	Filename string
 	Line     int
@@ -23,24 +24,27 @@ type Todo struct {
 // between the todos.
 func (todo Todo) LogString() string {
 	if todo.ID == nil {
-		return fmt.Sprintf("%s:%d: %sTODO: %s",
+		return fmt.Sprintf("%s:%d: %s%s: %s",
 			todo.Filename, todo.Line,
-			todo.Prefix, todo.Suffix)
+			todo.Prefix, todo.Keyword,
+			todo.Suffix)
 	}
 
-	return fmt.Sprintf("%s:%d: %sTODO(%s): %s",
+	return fmt.Sprintf("%s:%d: %s%s(%s): %s",
 		todo.Filename, todo.Line,
-		todo.Prefix, *todo.ID, todo.Suffix)
+		todo.Prefix, todo.Keyword,
+		*todo.ID, todo.Suffix)
 }
 
 func (todo Todo) String() string {
 	if todo.ID == nil {
-		return fmt.Sprintf("%sTODO: %s",
-			todo.Prefix, todo.Suffix)
+		return fmt.Sprintf("%s%s: %s",
+			todo.Prefix, todo.Keyword, todo.Suffix)
 	}
 
-	return fmt.Sprintf("%sTODO(%s): %s",
-		todo.Prefix, *todo.ID, todo.Suffix)
+	return fmt.Sprintf("%s%s(%s): %s",
+		todo.Prefix, todo.Keyword, *todo.ID,
+		todo.Suffix)
 }
 
 func (todo Todo) updateToFile(outputFilename string, lineCallback func(int, string) (string, bool)) error {
@@ -127,7 +131,7 @@ func (todo Todo) GitCommit(prefix string) error {
 		return err
 	}
 
-	if err := LogCommand(exec.Command("git", "commit", "-m", fmt.Sprintf("%s TODO(%s)", prefix, *todo.ID))).Run(); err != nil {
+	if err := LogCommand(exec.Command("git", "commit", "-m", fmt.Sprintf("%s %s(%s)", prefix, todo.Keyword, *todo.ID))).Run(); err != nil {
 		return err
 	}
 
