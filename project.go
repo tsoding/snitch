@@ -40,24 +40,36 @@ func (titleConfig *TitleConfig) Transform(title string) string {
 // Project contains the project level configuration
 type Project struct {
 	Title *TitleConfig
+	Keywords []string
+}
+
+func unreportedTodoRegexp(keyword string) string {
+	return "^(.*)"+regexp.QuoteMeta(keyword)+": (.*)$"
+}
+
+func reportedTodoRegexp(keyword string) string {
+	return "^(.*)"+regexp.QuoteMeta(keyword)+"\\((.*)\\): (.*)$"
 }
 
 func (project Project) lineAsUnreportedTodo(line string) *Todo {
-	unreportedTodo := regexp.MustCompile("^(.*)TODO: (.*)$")
-	groups := unreportedTodo.FindStringSubmatch(line)
+	for _, keyword := range project.Keywords {
+		unreportedTodo := regexp.MustCompile(
+			unreportedTodoRegexp(keyword))
+		groups := unreportedTodo.FindStringSubmatch(line)
 
-	if groups != nil {
-		prefix := groups[1]
-		suffix := groups[2]
-		title := project.Title.Transform(suffix)
+		if groups != nil {
+			prefix := groups[1]
+			suffix := groups[2]
+			title := project.Title.Transform(suffix)
 
-		return &Todo{
-			Prefix:   prefix,
-			Suffix:   suffix,
-			ID:       nil,
-			Filename: "",
-			Line:     0,
-			Title:    title,
+			return &Todo{
+				Prefix:   prefix,
+				Suffix:   suffix,
+				ID:       nil,
+				Filename: "",
+				Line:     0,
+				Title:    title,
+			}
 		}
 	}
 
@@ -65,22 +77,24 @@ func (project Project) lineAsUnreportedTodo(line string) *Todo {
 }
 
 func (project Project) lineAsReportedTodo(line string) *Todo {
-	unreportedTodo := regexp.MustCompile("^(.*)TODO\\((.*)\\): (.*)$")
-	groups := unreportedTodo.FindStringSubmatch(line)
+	for _, keyword := range project.Keywords {
+		unreportedTodo := regexp.MustCompile(reportedTodoRegexp(keyword))
+		groups := unreportedTodo.FindStringSubmatch(line)
 
-	if groups != nil {
-		prefix := groups[1]
-		suffix := groups[3]
-		id := groups[2]
-		title := project.Title.Transform(suffix)
+		if groups != nil {
+			prefix := groups[1]
+			suffix := groups[3]
+			id := groups[2]
+			title := project.Title.Transform(suffix)
 
-		return &Todo{
-			Prefix:   prefix,
-			Suffix:   suffix,
-			ID:       &id,
-			Filename: "",
-			Line:     0,
-			Title:    title,
+			return &Todo{
+				Prefix:   prefix,
+				Suffix:   suffix,
+				ID:       &id,
+				Filename: "",
+				Line:     0,
+				Title:    title,
+			}
 		}
 	}
 
@@ -159,26 +173,30 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 
 // NewProject constructs the Project from a YAML file
 func NewProject(filePath string) (*Project, error) {
-	if stat, err := os.Stat(filePath); os.IsNotExist(err) || stat.IsDir() {
-		return &Project{
-			Title: &TitleConfig{
-				Transforms: []*TransformRule{},
-			},
-		}, nil
+	project := &Project{
+		Title: &TitleConfig{
+			Transforms: []*TransformRule{},
+		},
+		Keywords: []string{},
 	}
 
-	configFile, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer configFile.Close()
+	if stat, err := os.Stat(filePath); !os.IsNotExist(err) && !stat.IsDir() {
+		configFile, err := os.Open(filePath)
+		if err != nil {
+			return nil, err
+		}
+		defer configFile.Close()
 
-	yamlDecoder := yaml.NewDecoder(configFile)
-	var project Project
-	err = yamlDecoder.Decode(&project)
-	if err != nil {
-		return nil, err
+		yamlDecoder := yaml.NewDecoder(configFile)
+		err = yamlDecoder.Decode(&project)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return &project, nil
+	if len(project.Keywords) == 0 {
+		project.Keywords = []string{"TODO"}
+	}
+
+	return project, nil
 }
