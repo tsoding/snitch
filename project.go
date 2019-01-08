@@ -127,7 +127,7 @@ func (project Project) WalkTodosOfFile(path string, visit func(Todo) error) erro
 
 	reader := bufio.NewReader(file)
 
-	var todo *Todo = nil
+	var todo *Todo
 
 	text, _, err := reader.ReadLine()
 	for line := 1; err == nil; line = line + 1 {

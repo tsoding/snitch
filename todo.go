@@ -49,13 +49,14 @@ func (todo Todo) String() string {
 		todo.Suffix)
 }
 
+// ParseBodyLine strips off the prefix of a body line of the TODO
 func (todo Todo) ParseBodyLine(line string) *string {
 	if strings.HasPrefix(line, todo.Prefix) {
 		bodyLine := strings.TrimPrefix(line, todo.Prefix)
 		return &bodyLine
-	} else {
-		return nil
 	}
+
+	return nil
 }
 
 func (todo Todo) updateToFile(outputFilename string, lineCallback func(int, string) (string, bool)) error {
