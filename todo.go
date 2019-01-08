@@ -16,7 +16,6 @@ type Todo struct {
 	Filename string
 	Line     int
 	Title    string
-	Body     []string
 }
 
 // LogString formats TODO for compilation logging. Format is
