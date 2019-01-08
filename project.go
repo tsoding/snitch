@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"
@@ -192,7 +193,7 @@ func NewProject(filePath string) (*Project, error) {
 		yamlDecoder := yaml.NewDecoder(configFile)
 		err = yamlDecoder.Decode(&project)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, filePath)
 		}
 	}
 
