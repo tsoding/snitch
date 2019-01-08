@@ -122,7 +122,10 @@ func (todo Todo) Update() error {
 
 // Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
-	// TODO: Todo.Remove does not remove the body of the TODO
+	// TODO(#124): Todo.Remove does not remove the body of the TODO
+	// It should remove both:
+	// - The TODO itself
+	// - The body of the TODO
 	return todo.updateInPlace(func(lineNumber int, line string) (string, bool) {
 		if lineNumber == todo.Line {
 			return "", true
