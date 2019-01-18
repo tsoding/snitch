@@ -3,9 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"net/http"
-	"fmt"
 )
 
 // GithubCredentials contains PersonalToken for GitHub API authorization
