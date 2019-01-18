@@ -181,6 +181,9 @@ func (todo Todo) ReportTodo(creds GithubCredentials, repo string, body string) (
 			"title": todo.Title,
 			"body":  body,
 		})
+	if err != nil {
+		return todo, err
+	}
 
 	id := "#" + strconv.Itoa(int(json["number"].(float64)))
 	todo.ID = &id
