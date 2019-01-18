@@ -35,7 +35,7 @@ func (creds GithubCredentials) QueryGithubAPI(method, url string, jsonBody map[s
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode >= 400 {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		return nil, fmt.Errorf("GitHub API error: %s", buf.String())
