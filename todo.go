@@ -173,7 +173,6 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 // ReportTodo reports the todo as a Github Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
 func (todo Todo) ReportTodo(creds GithubCredentials, repo string, body string) (Todo, error) {
-	// TODO(#60): ReportTodo is not a Todo method
 	json, err := creds.QueryGithubAPI(
 		"POST",
 		"https://api.github.com/repos/"+repo+"/issues",
@@ -181,6 +180,9 @@ func (todo Todo) ReportTodo(creds GithubCredentials, repo string, body string) (
 			"title": todo.Title,
 			"body":  body,
 		})
+	if err != nil {
+		return todo, err
+	}
 
 	id := "#" + strconv.Itoa(int(json["number"].(float64)))
 	todo.ID = &id

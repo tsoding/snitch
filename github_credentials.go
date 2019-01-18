@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"net/http"
 )
@@ -33,6 +34,12 @@ func (creds GithubCredentials) QueryGithubAPI(method, url string, jsonBody map[s
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		return nil, fmt.Errorf("GitHub API error: %s", buf.String())
+	}
 
 	var v map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
