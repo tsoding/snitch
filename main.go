@@ -45,6 +45,10 @@ func reportSubcommand(project Project, creds GithubCredentials, repo string, pre
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
 			fmt.Printf("%v\n", todo.LogString())
+			fmt.Printf("Issue Title: %s\n", todo.Title)
+			for _, bodyLine := range todo.Body {
+				fmt.Printf("  %s\n", bodyLine)
+			}
 
 			yes, err := yOrN("Do you want to report this? ")
 
