@@ -15,9 +15,6 @@ After that you are supposed to push the new reported TODOs yourself.
 
 ## TODO Format
 
-Keep in mind that Snitch supports only single line TODOs right
-now. For a possible multiline support track issue [#81].
-
 ### Unreported TODO
 
 #### Example
@@ -50,6 +47,24 @@ Capture Groups:
 - Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
 - Group 2: **ID**. The number of the Issue.
 - Group 3: **Suffix**. Used as the title of the issue.
+
+### TODO Body
+
+#### Example
+
+```
+// TODO: rewrite this in Rust
+// I honestly think Rust is going to be around forever,
+// I really do. I think this is like, this is the formation
+// of Ancient Greek.
+// © https://www.reddit.com/r/programmingcirclejerk/comments/ahmnwa/i_honestly_think_rust_is_going_to_be_around/
+```
+
+#### Parsing
+
+- Snitch remembers the TODO's prefix.
+- Snitch parses all of the consecutive lines with the same prefix as the body.
+- The body is reported as the Issue Description.
 
 ## Installation
 
@@ -113,4 +128,3 @@ Checkout [GitHub Help][personal-token] on how to get the Personal Access Token.
 Make sure to enable full access to private repos. For some reason it's required to post issues.
 
 [personal-token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
-[#81]: https://github.com/tsoding/snitch/issues/81
