@@ -241,6 +241,24 @@ func parseParams(args []string) (map[string]string, error) {
 	return result, nil
 }
 
+func checkParams(params map[string]string, allowedParams []string) error {
+	for param := range params {
+		allowed := false
+		for _, allowedParam := range allowedParams {
+			if param == allowedParam {
+				allowed = true
+				break
+			}
+		}
+
+		if !allowed {
+			return fmt.Errorf("Unknown flag `%s'", param)
+		}
+	}
+
+	return nil
+}
+
 func locateProject(directory string) (string, error) {
 	dotGit, err := locateDotGit(directory)
 	if err != nil {
@@ -292,6 +310,13 @@ func main() {
 			params, err := parseParams(os.Args[2:])
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+
+			err = checkParams(params, []string{"prepend-body"})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				usage()
 				os.Exit(1)
 			}
 
