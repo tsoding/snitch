@@ -128,7 +128,7 @@ func (todo Todo) Remove() error {
 	// - The TODO itself
 	// - The body of the TODO
 	return todo.updateInPlace(func(lineNumber int, line string) (string, bool) {
-		if todo.Line <= lineNumber && lineNumber <= todo.Line + len(todo.Body) {
+		if todo.Line <= lineNumber && lineNumber <= todo.Line+len(todo.Body) {
 			return "", true
 		}
 
