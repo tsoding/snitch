@@ -32,9 +32,11 @@ func yOrN(question string) (bool, error) {
 	return true, err
 }
 
-func listSubcommand(project Project) error {
+func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	return project.WalkTodosOfDir(".", func(todo Todo) error {
-		fmt.Printf("%v\n", todo.LogString())
+		if filter(todo) {
+			fmt.Printf("%v\n", todo.LogString())
+		}
 		return nil
 	})
 }
@@ -149,7 +151,7 @@ func purgeSubcommand(project Project, creds GithubCredentials, repo string) erro
 func usage() {
 	// TODO(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
-		"\tlist: lists all todos of a dir recursively\n" +
+		"\tlist [--unreported]: lists all todos of a dir recursively\n" +
 		"\treport [--prepend-body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
 		"\tpurge <owner/repo>: removes all of the reported TODOs that refer to closed issues\n")
 }
@@ -302,7 +304,23 @@ func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
-			if err = listSubcommand(*project); err != nil {
+			params, err := parseParams(os.Args[2:])
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+
+			err = checkParams(params, []string{"unreported"})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			_, unreported := params["unreported"]
+
+			err = listSubcommand(*project, func(todo Todo) bool {
+				return !unreported || todo.ID == nil
+			})
+			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
