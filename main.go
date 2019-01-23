@@ -32,9 +32,9 @@ func yOrN(question string) (bool, error) {
 	return true, err
 }
 
-func listSubcommand(project Project, filter func (todo Todo) bool) error {
+func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	return project.WalkTodosOfDir(".", func(todo Todo) error {
-		if (filter(todo)) {
+		if filter(todo) {
 			fmt.Printf("%v\n", todo.LogString())
 		}
 		return nil
@@ -317,7 +317,7 @@ func main() {
 			}
 			_, unreported := params["unreported"]
 
-			err = listSubcommand(*project, func (todo Todo) bool {
+			err = listSubcommand(*project, func(todo Todo) bool {
 				return !unreported || todo.ID == nil
 			})
 			if err != nil {
