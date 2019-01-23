@@ -75,7 +75,7 @@ $ go get github.com/tsoding/snitch
 ## Usage
 
 ```console
-$ snitch list                         # lists all TODOs in the current dir
+$ snitch list [--unreported]          # lists all TODOs in the current dir
 $ snitch report [--body <issue-body>] # report all unreported TODOs in the current dir
 $ snitch purge <owner/repo>           # remove TODOs that refer to closed issues
 ```
