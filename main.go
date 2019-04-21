@@ -270,15 +270,25 @@ func locateProject(directory string) (string, error) {
 	return path.Join(filepath.Dir(dotGit), ".snitch.yaml"), nil
 }
 
-func main() {
+func getGithubCredentials() (GithubCredentials, error) {
+	envar := os.Getenv("GITHUB_PERSONAL_TOKEN")
 	usr, err := user.Current()
+
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	creds, err := GithubCredentialsFromFile(
-		path.Join(usr.HomeDir, ".snitch/github.ini"))
+	if len(envar) != 0 {
+		return GithubCredentialsFromToken(envar), nil
+	} else {
+		return GithubCredentialsFromFile(
+			path.Join(usr.HomeDir, ".snitch/github.ini"))
+	}
+}
+
+func main() {
+	creds, err := getGithubCredentials()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
