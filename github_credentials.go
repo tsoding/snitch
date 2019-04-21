@@ -60,3 +60,10 @@ func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
 		PersonalToken: cfg.Section("github").Key("personal_token").String(),
 	}, nil
 }
+
+// GithubCredentialsFromToken returns a GithubCredentials from a string oken
+func GithubCredentialsFromToken(token string) GithubCredentials {
+	return GithubCredentials{
+		PersonalToken: token,
+	}
+}

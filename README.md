@@ -112,11 +112,16 @@ title:
 This feature is very useful for removing garbage from the Issue
 Titles. Like `*/` at the end of C comments.
 
-## GitHub Credentials File
+## GitHub Credentials
+Snitch obtains credentials from two places:  (default) environment variable or file.
 
+### Environment Variable
+`export GITHUB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`
+
+### File
 Resides in `$HOME/.snitch/github.ini`
 
-### Format
+#### Format
 
 ```ini
 [github]
