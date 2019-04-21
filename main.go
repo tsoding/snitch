@@ -281,10 +281,10 @@ func getGithubCredentials() (GithubCredentials, error) {
 
 	if len(envar) != 0 {
 		return GithubCredentialsFromToken(envar), nil
-	} else {
-		return GithubCredentialsFromFile(
-			path.Join(usr.HomeDir, ".snitch/github.ini"))
 	}
+
+	return GithubCredentialsFromFile(
+		path.Join(usr.HomeDir, ".snitch/github.ini"))
 }
 
 func main() {
