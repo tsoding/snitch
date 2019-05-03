@@ -72,6 +72,26 @@ Capture Groups:
 $ go get github.com/tsoding/snitch
 ```
 
+## GitHub Credentials
+Snitch obtains credentials from two places:  (default) environment variable or file.
+
+### Environment Variable
+`export GITHUB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`
+
+### File
+Resides in `$HOME/.snitch/github.ini`
+
+#### Format
+
+```ini
+[github]
+personal_token = <personal-token>
+```
+
+Checkout [GitHub Help][personal-token] on how to get the Personal Access Token.
+
+Make sure to enable full access to private repos. For some reason it's required to post issues.
+
 ## Usage
 
 ```console
@@ -111,25 +131,5 @@ title:
 
 This feature is very useful for removing garbage from the Issue
 Titles. Like `*/` at the end of C comments.
-
-## GitHub Credentials
-Snitch obtains credentials from two places:  (default) environment variable or file.
-
-### Environment Variable
-`export GITHUB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`
-
-### File
-Resides in `$HOME/.snitch/github.ini`
-
-#### Format
-
-```ini
-[github]
-personal_token = <personal-token>
-```
-
-Checkout [GitHub Help][personal-token] on how to get the Personal Access Token.
-
-Make sure to enable full access to private repos. For some reason it's required to post issues.
 
 [personal-token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
