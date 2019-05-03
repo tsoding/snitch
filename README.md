@@ -132,4 +132,11 @@ title:
 This feature is very useful for removing garbage from the Issue
 Titles. Like `*/` at the end of C comments.
 
+## Support
+
+You can support my work via
+
+- Twitch channel: https://www.twitch.tv/subs/tsoding
+- Patreon: https://www.patreon.com/tsoding
+
 [personal-token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
