@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -190,9 +191,20 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 
 	for scanner.Scan() {
 		filepath := scanner.Text()
-		err = project.WalkTodosOfFile(filepath, visit)
+
+		stat, err := os.Stat(filepath)
 		if err != nil {
 			return err
+		}
+
+		if !stat.IsDir() {
+			err = project.WalkTodosOfFile(filepath, visit)
+			if err != nil {
+				return err
+			}
+		} else {
+			// TODO(#145): snitch should go inside of git submodules recursively
+			fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
 		}
 	}
 
