@@ -94,10 +94,10 @@ Make sure to enable full access to private repos. For some reason it's required 
 
 ## Usage
 
+For usage help just run `snitch` without any arguments:
+
 ```console
-$ snitch list [--unreported]          # lists all TODOs in the current dir
-$ snitch report [--body <issue-body>] # report all unreported TODOs in the current dir
-$ snitch purge <owner/repo>           # remove TODOs that refer to closed issues
+$ ./snitch
 ```
 
 ## .snitch.yaml
