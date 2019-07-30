@@ -132,6 +132,14 @@ title:
 This feature is very useful for removing garbage from the Issue
 Titles. Like `*/` at the end of C comments.
 
+## Development
+
+```console
+$ export GOPATH=$PWD
+$ go get .
+$ go build .
+```
+
 ## Support
 
 You can support my work via
