@@ -94,10 +94,10 @@ Make sure to enable full access to private repos. For some reason it's required 
 
 ## Usage
 
+For usage help just run `snitch` without any arguments:
+
 ```console
-$ snitch list [--unreported]          # lists all TODOs in the current dir
-$ snitch report [--body <issue-body>] # report all unreported TODOs in the current dir
-$ snitch purge <owner/repo>           # remove TODOs that refer to closed issues
+$ ./snitch
 ```
 
 ## .snitch.yaml
@@ -131,6 +131,14 @@ title:
 
 This feature is very useful for removing garbage from the Issue
 Titles. Like `*/` at the end of C comments.
+
+## Development
+
+```console
+$ export GOPATH=$PWD
+$ go get .
+$ go build .
+```
 
 ## Support
 

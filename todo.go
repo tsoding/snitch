@@ -123,7 +123,7 @@ func (todo Todo) Update() error {
 
 // Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
-	// TODO(#124): Todo.Remove does not remove the body of the TODO
+	// FIXME(#124): Todo.Remove does not remove the body of the TODO
 	// It should remove both:
 	// - The TODO itself
 	// - The body of the TODO
@@ -138,7 +138,7 @@ func (todo Todo) Remove() error {
 
 // GitCommit commits the Todo location to the git repo
 func (todo Todo) GitCommit(prefix string) error {
-	// TODO(#96): there is no way to check that Todo is unreported at compile time
+	// FIXME(#96): there is no way to check that Todo is unreported at compile time
 	if todo.ID == nil {
 		panic(fmt.Sprintf("Trying to commit an unreported TODO! %v", todo))
 	}
@@ -159,7 +159,7 @@ func (todo Todo) GitCommit(prefix string) error {
 func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
 	json, err := creds.QueryGithubAPI(
 		"GET",
-		// TODO(#59): possible GitHub API injection attack
+		// FIXME(#59): possible GitHub API injection attack
 		"https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:],
 		nil)
 

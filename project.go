@@ -203,7 +203,7 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 				return err
 			}
 		} else {
-			// TODO(#145): snitch should go inside of git submodules recursively
+			// FIXME(#145): snitch should go inside of git submodules recursively
 			fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
 		}
 	}
@@ -220,6 +220,7 @@ func NewProject(filePath string) (*Project, error) {
 		Keywords: []string{},
 	}
 
+	// FIXME(#149): snitch does not work without .snitch.yaml
 	if stat, err := os.Stat(filePath); !os.IsNotExist(err) && !stat.IsDir() {
 		configFile, err := os.Open(filePath)
 		if err != nil {
