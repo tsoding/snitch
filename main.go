@@ -267,7 +267,7 @@ func locateProject(directory string) (string, error) {
 		return "", err
 	}
 
-	// FIXME: snitch is looking only for .snitch.yaml ignoring .snitch.yml
+	// FIXME(#148): snitch is looking only for .snitch.yaml ignoring .snitch.yml
 	return path.Join(filepath.Dir(dotGit), ".snitch.yaml"), nil
 }
 
