@@ -149,7 +149,7 @@ func purgeSubcommand(project Project, creds GithubCredentials, repo string) erro
 }
 
 func usage() {
-	// TODO(#9): implement a map for options instead of println'ing them all there
+	// FIXME(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
 		"\tlist [--unreported] [--reported]: lists all todos of a dir recursively\n" +
 		"\treport [--prepend-body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +

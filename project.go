@@ -203,7 +203,7 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 				return err
 			}
 		} else {
-			// TODO(#145): snitch should go inside of git submodules recursively
+			// FIXME(#145): snitch should go inside of git submodules recursively
 			fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
 		}
 	}
