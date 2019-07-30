@@ -153,7 +153,7 @@ func usage() {
 	fmt.Printf("snitch [opt]\n" +
 		"\tlist [--unreported]: lists all todos of a dir recursively\n" +
 		"\treport [--prepend-body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
-		"\tpurge <owner/repo>: removes all of the reported TODOs that refer to closed issues\n")
+		"\tpurge: removes all of the reported TODOs that refer to closed issues\n")
 }
 
 func locateDotGit(dir string) (string, error) {
