@@ -151,7 +151,7 @@ func purgeSubcommand(project Project, creds GithubCredentials, repo string) erro
 func usage() {
 	// TODO(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
-		"\tlist [--unreported]: lists all todos of a dir recursively\n" +
+		"\tlist [--unreported] [--reported]: lists all todos of a dir recursively\n" +
 		"\treport [--prepend-body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
 		"\tpurge: removes all of the reported TODOs that refer to closed issues\n")
 }
@@ -320,15 +320,26 @@ func main() {
 				os.Exit(1)
 			}
 
-			err = checkParams(params, []string{"unreported"})
+			err = checkParams(params, []string{"unreported", "reported"})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 			_, unreported := params["unreported"]
+			_, reported := params["reported"]
 
 			err = listSubcommand(*project, func(todo Todo) bool {
-				return !unreported || todo.ID == nil
+				filter := reported == unreported
+
+				if unreported {
+					filter = filter || todo.ID == nil
+				}
+
+				if reported {
+					filter = filter || todo.ID != nil
+				}
+
+				return filter
 			})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
