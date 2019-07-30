@@ -220,6 +220,7 @@ func NewProject(filePath string) (*Project, error) {
 		Keywords: []string{},
 	}
 
+	// FIXME: snitch does not work without .snitch.yaml
 	if stat, err := os.Stat(filePath); !os.IsNotExist(err) && !stat.IsDir() {
 		configFile, err := os.Open(filePath)
 		if err != nil {
