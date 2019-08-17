@@ -61,7 +61,7 @@ func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
 	}, nil
 }
 
-// GithubCredentialsFromToken returns a GithubCredentials from a string oken
+// GithubCredentialsFromToken returns a GithubCredentials from a string token
 func GithubCredentialsFromToken(token string) GithubCredentials {
 	return GithubCredentials{
 		PersonalToken: token,
