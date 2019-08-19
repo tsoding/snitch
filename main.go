@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"os"
@@ -302,11 +301,12 @@ func getGithubCredentials() (GithubCredentials, error) {
 		}
 	}
 
-	if _, err := os.Stat(path.Join(usr.HomeDir, ".snitch/github.ini")); err == nil {
-		return GithubCredentialsFromFile(path.Join(usr.HomeDir, ".snitch/github.ini"))
+	filePath := path.Join(usr.HomeDir, ".snitch/github.ini")
+	if _, err := os.Stat(filePath); err == nil {
+		return GithubCredentialsFromFile(filePath)
 	}
 
-	return GithubCredentials{}, errors.New("Configuration file is missing")
+	return GithubCredentials{}, fmt.Errorf("GitHub token is missing")
 }
 
 func main() {
