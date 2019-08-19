@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"os"
@@ -272,7 +273,8 @@ func locateProject(directory string) (string, error) {
 }
 
 func getGithubCredentials() (GithubCredentials, error) {
-	envar := os.Getenv("GITHUB_PERSONAL_TOKEN")
+	tokenEnvar := os.Getenv("GITHUB_PERSONAL_TOKEN")
+	xdgEnvar := os.Getenv("XDG_CONFIG_HOME")
 	usr, err := user.Current()
 
 	if err != nil {
@@ -280,12 +282,31 @@ func getGithubCredentials() (GithubCredentials, error) {
 		os.Exit(1)
 	}
 
-	if len(envar) != 0 {
-		return GithubCredentialsFromToken(envar), nil
+	if len(tokenEnvar) != 0 {
+		return GithubCredentialsFromToken(tokenEnvar), nil
 	}
 
-	return GithubCredentialsFromFile(
-		path.Join(usr.HomeDir, ".snitch/github.ini"))
+	// custom XDG_CONFIG_HOME
+	if len(xdgEnvar) != 0 {
+		filePath := path.Join(xdgEnvar, "snitch/github.ini")
+		if _, err := os.Stat(filePath); err == nil {
+			return GithubCredentialsFromFile(filePath)
+		}
+	}
+
+	// default XDG_CONFIG_HOME
+	if len(xdgEnvar) == 0 {
+		filePath := path.Join(usr.HomeDir, ".config/snitch/github.ini")
+		if _, err := os.Stat(filePath); err == nil {
+			return GithubCredentialsFromFile(filePath)
+		}
+	}
+
+	if _, err := os.Stat(path.Join(usr.HomeDir, ".snitch/github.ini")); err == nil {
+		return GithubCredentialsFromFile(path.Join(usr.HomeDir, ".snitch/github.ini"))
+	}
+
+	return GithubCredentials{}, errors.New("Configuration file is missing")
 }
 
 func main() {
