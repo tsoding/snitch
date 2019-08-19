@@ -80,7 +80,9 @@ Snitch obtains credentials from two places:  (default) environment variable or f
 `export GITHUB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`
 
 ### File
-Resides in `$HOME/.snitch/github.ini`
+Config file can be stored in one of the following directories:
+- `$HOME/.config/snitch/github.ini`
+- `$HOME/.snitch/github.ini`
 
 #### Format
 
@@ -120,7 +122,7 @@ keywords:
 ### Issue Title Transformation
 
 You can apply project local issue title transformations. Create
-`.snich.yaml` file in the root of the project with the following
+`.snitch.yaml` file in the root of the project with the following
 content:
 
 ```yaml
