@@ -309,44 +309,34 @@ func getGithubCredentials() (GithubCredentials, error) {
 	return GithubCredentials{}, fmt.Errorf("GitHub token is missing")
 }
 
+func handleError(err error) {
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	creds, err := getGithubCredentials()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	handleError(err)
 
 	repo, err := getGithubRepo(".")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	handleError(err)
 
 	projectPath, err := locateProject(".")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	handleError(err)
+
 	project, err := NewProject(projectPath)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	handleError(err)
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
 			params, err := parseParams(os.Args[2:])
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			handleError(err)
 
 			err = checkParams(params, []string{"unreported", "reported"})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			handleError(err)
 			_, unreported := params["unreported"]
 			_, reported := params["reported"]
 
@@ -363,16 +353,10 @@ func main() {
 
 				return filter
 			})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			handleError(err)
 		case "report":
 			params, err := parseParams(os.Args[2:])
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			handleError(err)
 
 			err = checkParams(params, []string{"prepend-body"})
 			if err != nil {
