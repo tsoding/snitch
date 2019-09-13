@@ -64,6 +64,10 @@ func (creds GithubCredentials) postIssue(repo string, todo Todo, body string) (T
 	return todo, err
 }
 
+func (creds GithubCredentials) getHost() string {
+	return "github.com"
+}
+
 // GithubCredentialsFromFile gets GithubCredentials from a filepath
 func GithubCredentialsFromFile(filepath string) (GithubCredentials, error) {
 	cfg, err := ini.Load(filepath)
