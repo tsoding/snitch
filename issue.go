@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+// IssueAPI requires implementing common API for querying and posting issues
+// regardless of service that's being used.
 type IssueAPI interface {
 	getIssue(repo string, todo Todo) (map[string]interface{}, error)
 	postIssue(repo string, todo Todo, body string) (Todo, error)
