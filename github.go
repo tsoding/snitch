@@ -6,11 +6,44 @@ import (
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"net/http"
+	"strconv"
 )
 
 // GithubCredentials contains PersonalToken for GitHub API authorization
 type GithubCredentials struct {
 	PersonalToken string
+}
+
+func (creds GithubCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
+	json, err := creds.QueryGithubAPI(
+		"GET",
+		// FIXME(#59): possible GitHub API injection attack
+		"https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:],
+		nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return json, nil
+}
+
+func (creds GithubCredentials) postIssue(repo string, todo Todo, body string) (Todo, error) {
+	json, err := creds.QueryGithubAPI(
+		"POST",
+		"https://api.github.com/repos/"+repo+"/issues",
+		map[string]interface{}{
+			"title": todo.Title,
+			"body":  body,
+		})
+	if err != nil {
+		return todo, err
+	}
+
+	id := "#" + strconv.Itoa(int(json["number"].(float64)))
+	todo.ID = &id
+
+	return todo, err
 }
 
 // QueryGithubAPI makes a GitHub API query
