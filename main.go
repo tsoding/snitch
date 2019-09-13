@@ -68,7 +68,15 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 	}
 
 	for _, todo := range todosToReport {
-		reportedTodo, err := todo.ReportTodo(creds, repo, prependBody+"\n"+strings.Join(todo.Body, "\n"))
+		var newline string = ""
+		switch creds.(type) {
+		case GitlabCredentials:
+			newline = "\n\n"
+		case GithubCredentials:
+			newline = "\n"
+		}
+
+		reportedTodo, err := todo.ReportTodo(creds, repo, prependBody+newline+strings.Join(todo.Body, newline))
 
 		if err != nil {
 			return err
@@ -195,6 +203,8 @@ func repoFromConfig(configPath string) (string, error) {
 
 	urlString := url.String()
 
+	// Regex depends on the Host or is github.com in case of GithubCredentials
+	// TODO: update regex to match gitlab and self-hosted instances
 	githubRepoRegexp := regexp.MustCompile(
 		"github.com[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
 	groups := githubRepoRegexp.FindStringSubmatch(urlString)
@@ -278,9 +288,32 @@ func handleError(err error) {
 	}
 }
 
+func getCredentials() []IssueAPI {
+	creds := []IssueAPI{}
+
+	if github, err := getGithubCredentials(); err == nil {
+		creds = append(creds, github)
+	}
+	creds = getGitlabCredentials(creds)
+
+	fmt.Printf("Found %d hosts\n", len(creds))
+	for _, cred := range creds {
+		fmt.Printf("Host: %s\n", cred.getHost())
+	}
+
+	return creds
+}
+
 func main() {
-	creds, err := getGithubCredentials()
-	handleError(err)
+	// creds, err := getGithubCredentials()
+	// creds, err := getGitlabCredentials()
+	// handleError(err)
+	allCredentials := getCredentials()
+	if len(allCredentials) == 0 {
+		fmt.Fprintln(os.Stderr, "No credentials have been found")
+		os.Exit(1)
+	}
+	creds := allCredentials[0]
 
 	repo, err := getGithubRepo(".")
 	handleError(err)
