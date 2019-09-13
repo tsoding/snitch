@@ -308,8 +308,6 @@ func main() {
 	repo, creds, err := getRepo(".", allCredentials)
 	handleError(err)
 
-	fmt.Printf("Host: %s\n", creds.getHost())
-
 	projectPath, err := locateProject(".")
 	handleError(err)
 
