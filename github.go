@@ -82,3 +82,41 @@ func GithubCredentialsFromToken(token string) GithubCredentials {
 		PersonalToken: token,
 	}
 }
+
+func getGithubCredentials() (GithubCredentials, error) {
+	tokenEnvar := os.Getenv("GITHUB_PERSONAL_TOKEN")
+	xdgEnvar := os.Getenv("XDG_CONFIG_HOME")
+	usr, err := user.Current()
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	if len(tokenEnvar) != 0 {
+		return GithubCredentialsFromToken(tokenEnvar), nil
+	}
+
+	// custom XDG_CONFIG_HOME
+	if len(xdgEnvar) != 0 {
+		filePath := path.Join(xdgEnvar, "snitch/github.ini")
+		if _, err := os.Stat(filePath); err == nil {
+			return GithubCredentialsFromFile(filePath)
+		}
+	}
+
+	// default XDG_CONFIG_HOME
+	if len(xdgEnvar) == 0 {
+		filePath := path.Join(usr.HomeDir, ".config/snitch/github.ini")
+		if _, err := os.Stat(filePath); err == nil {
+			return GithubCredentialsFromFile(filePath)
+		}
+	}
+
+	filePath := path.Join(usr.HomeDir, ".snitch/github.ini")
+	if _, err := os.Stat(filePath); err == nil {
+		return GithubCredentialsFromFile(filePath)
+	}
+
+	return GithubCredentials{}, fmt.Errorf("GitHub token is missing")
+}
