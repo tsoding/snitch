@@ -49,7 +49,7 @@ func (creds GitlabCredentials) postIssue(repo string, todo Todo, body string) (T
 
 	json, err := creds.query(
 		"POST",
-		"https://"+creds.Host+"/api/v4/projects/"+url.QueryEscape(repo)+"/issues"+params.Encode()) // self-hosted
+		"https://"+creds.Host+"/api/v4/projects/"+url.QueryEscape(repo)+"/issues?"+params.Encode()) // self-hosted
 	if err != nil {
 		return todo, err
 	}
