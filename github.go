@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"net/http"
+	"os"
+	"os/user"
+	"path"
 	"strconv"
 )
 
@@ -14,8 +17,23 @@ type GithubCredentials struct {
 	PersonalToken string
 }
 
+func (creds GithubCredentials) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
+	bodyBuffer := new(bytes.Buffer)
+	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
+
+	req, err := http.NewRequest(method, url, bodyBuffer)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Authorization", "token "+creds.PersonalToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	return QueryHTTP(req)
+}
+
 func (creds GithubCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
-	json, err := creds.QueryGithubAPI(
+	json, err := creds.query(
 		"GET",
 		// FIXME(#59): possible GitHub API injection attack
 		"https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:],
@@ -29,7 +47,7 @@ func (creds GithubCredentials) getIssue(repo string, todo Todo) (map[string]inte
 }
 
 func (creds GithubCredentials) postIssue(repo string, todo Todo, body string) (Todo, error) {
-	json, err := creds.QueryGithubAPI(
+	json, err := creds.query(
 		"POST",
 		"https://api.github.com/repos/"+repo+"/issues",
 		map[string]interface{}{
@@ -44,42 +62,6 @@ func (creds GithubCredentials) postIssue(repo string, todo Todo, body string) (T
 	todo.ID = &id
 
 	return todo, err
-}
-
-// QueryGithubAPI makes a GitHub API query
-func (creds GithubCredentials) QueryGithubAPI(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
-	client := &http.Client{}
-
-	bodyBuffer := new(bytes.Buffer)
-	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
-
-	req, err := http.NewRequest(
-		method, url, bodyBuffer)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Authorization", "token "+creds.PersonalToken)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		return nil, fmt.Errorf("GitHub API error: %s", buf.String())
-	}
-
-	var v map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
-		return nil, err
-	}
-
-	return v, err
 }
 
 // GithubCredentialsFromFile gets GithubCredentials from a filepath
