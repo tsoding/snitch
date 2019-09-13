@@ -165,8 +165,8 @@ func (todo Todo) RetrieveStatus(creds IssueAPI, repo string) (string, error) {
 	return json["state"].(string), nil
 }
 
-// ReportTodo reports the todo as a Github Issue, updates the file
+// Report reports the todo as an Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
-func (todo Todo) ReportTodo(creds IssueAPI, repo string, body string) (Todo, error) {
+func (todo Todo) Report(creds IssueAPI, repo string, body string) (Todo, error) {
 	return creds.postIssue(repo, todo, body)
 }

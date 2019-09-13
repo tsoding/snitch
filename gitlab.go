@@ -74,12 +74,10 @@ func GitlabCredentialsFromFile(filepath string) []GitlabCredentials {
 		return credentials
 	}
 
-	sections := cfg.Sections()
-	for i := 1; i < len(sections); i++ {
-		fmt.Printf("[%d]: %s\n", i, sections[i].Name())
+	for _, section := range cfg.Sections()[1:] {
 		credentials = append(credentials, GitlabCredentials{
-			Host: sections[i].Name(),
-			PersonalToken: sections[i].Key("personal_token").String(),
+			Host: section.Name(),
+			PersonalToken: section.Key("personal_token").String(),
 		})
 	}
 

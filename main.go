@@ -76,7 +76,8 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 			newline = "\n"
 		}
 
-		reportedTodo, err := todo.ReportTodo(creds, repo, prependBody+newline+strings.Join(todo.Body, newline))
+		reportedTodo, err := todo.Report(creds, repo,
+			prependBody+newline+strings.Join(todo.Body, newline))
 
 		if err != nil {
 			return err
@@ -114,7 +115,8 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 		if status == "closed" {
 			fmt.Printf("[CLOSED] %v\n", todo.LogString())
 			// TODO: GitLab link
-			fmt.Printf("Issue link: https://github.com/%s/issues/%s\n", repo, (*todo.ID)[1:])
+			fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
+				creds.getHost(), repo, (*todo.ID)[1:])
 
 			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
 
@@ -183,47 +185,44 @@ func locateDotGit(dir string) (string, error) {
 	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo")
 }
 
-func repoFromConfig(configPath string) (string, error) {
+func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error) {
+	dotGit, err := locateDotGit(directory)
+	if err != nil {
+		return "", nil, err
+	}
+
+	configPath := path.Join(dotGit, "config")
+
 	cfg, err := ini.Load(configPath)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	origin := cfg.Section("remote \"origin\"")
 	if origin == nil {
-		return "", fmt.Errorf("The git repo doesn't have any origin remote. " +
+		return "", nil, fmt.Errorf("The git repo doesn't have any origin remote. " +
 			"Please use `git remote add' command to add one.")
 	}
 
 	url := origin.Key("url")
 	if url == nil {
-		return "", fmt.Errorf("The origin remote doesn't have any URL's " +
+		return "", nil, fmt.Errorf("The origin remote doesn't have any URL's " +
 			"associated with it.")
 	}
 
 	urlString := url.String()
 
-	// Regex depends on the Host or is github.com in case of GithubCredentials
-	// TODO: update regex to match gitlab and self-hosted instances
-	githubRepoRegexp := regexp.MustCompile(
-		"github.com[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
-	groups := githubRepoRegexp.FindStringSubmatch(urlString)
+	for _, creds := range credentials {
+		hostRegex := regexp.MustCompile(
+			creds.getHost() + "[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
+		groups := hostRegex.FindStringSubmatch(urlString)
 
-	if groups != nil {
-		return groups[1] + "/" + groups[2], nil
+		if groups != nil {
+			return groups[1] + "/" + groups[2], creds, nil
+		}
 	}
 
-	return "", fmt.Errorf("%s does not match %v",
-		urlString, githubRepoRegexp)
-}
-
-func getGithubRepo(directory string) (string, error) {
-	dotGit, err := locateDotGit(directory)
-	if err != nil {
-		return "", err
-	}
-
-	return repoFromConfig(path.Join(dotGit, "config"))
+	return "", nil, fmt.Errorf("%s does not match any of the hosts", urlString)
 }
 
 func parseParams(args []string) (map[string]string, error) {
@@ -296,27 +295,20 @@ func getCredentials() []IssueAPI {
 	}
 	creds = getGitlabCredentials(creds)
 
-	fmt.Printf("Found %d hosts\n", len(creds))
-	for _, cred := range creds {
-		fmt.Printf("Host: %s\n", cred.getHost())
-	}
-
 	return creds
 }
 
 func main() {
-	// creds, err := getGithubCredentials()
-	// creds, err := getGitlabCredentials()
-	// handleError(err)
 	allCredentials := getCredentials()
 	if len(allCredentials) == 0 {
 		fmt.Fprintln(os.Stderr, "No credentials have been found")
 		os.Exit(1)
 	}
-	creds := allCredentials[0]
 
-	repo, err := getGithubRepo(".")
+	repo, creds, err := getRepo(".", allCredentials)
 	handleError(err)
+
+	fmt.Printf("Host: %s\n", creds.getHost())
 
 	projectPath, err := locateProject(".")
 	handleError(err)
@@ -365,7 +357,7 @@ func main() {
 				prependBody = ""
 			}
 
-			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
+			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
 
 			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
 				fmt.Fprintln(os.Stderr, err)
