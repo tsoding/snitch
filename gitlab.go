@@ -15,7 +15,7 @@ import (
 // and Host for possibly implementing support for self-hosted instances
 type GitlabCredentials struct {
 	// TODO: Self-hosted GitLab instance
-	Host string
+	Host          string
 	PersonalToken string
 }
 
@@ -49,7 +49,7 @@ func (creds GitlabCredentials) postIssue(repo string, todo Todo, body string) (T
 
 	json, err := creds.query(
 		"POST",
-		"https://"+creds.Host+"/api/v4/projects/"+url.QueryEscape(repo)+"/issues" + params.Encode()) // self-hosted
+		"https://"+creds.Host+"/api/v4/projects/"+url.QueryEscape(repo)+"/issues"+params.Encode()) // self-hosted
 	if err != nil {
 		return todo, err
 	}
@@ -64,7 +64,6 @@ func (creds GitlabCredentials) getHost() string {
 	return creds.Host
 }
 
-
 // GitlabCredentialsFromFile gets GitlabCredentials from a filepath
 func GitlabCredentialsFromFile(filepath string) []GitlabCredentials {
 	credentials := []GitlabCredentials{}
@@ -76,7 +75,7 @@ func GitlabCredentialsFromFile(filepath string) []GitlabCredentials {
 
 	for _, section := range cfg.Sections()[1:] {
 		credentials = append(credentials, GitlabCredentials{
-			Host: section.Name(),
+			Host:          section.Name(),
 			PersonalToken: section.Key("personal_token").String(),
 		})
 	}
@@ -87,7 +86,7 @@ func GitlabCredentialsFromFile(filepath string) []GitlabCredentials {
 // GitlabCredentialsFromToken returns a GitlabCredentials from a string token
 func GitlabCredentialsFromToken(token string) GitlabCredentials {
 	return GitlabCredentials{
-		Host: "gitlab.com",
+		Host:          "gitlab.com",
 		PersonalToken: token,
 	}
 }
