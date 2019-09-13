@@ -41,7 +41,7 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	})
 }
 
-func reportSubcommand(project Project, creds GithubCredentials, repo string, prependBody string) error {
+func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string) error {
 	todosToReport := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
@@ -91,7 +91,7 @@ func reportSubcommand(project Project, creds GithubCredentials, repo string, pre
 	return err
 }
 
-func purgeSubcommand(project Project, creds GithubCredentials, repo string) error {
+func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 	todosToRemove := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
@@ -99,13 +99,14 @@ func purgeSubcommand(project Project, creds GithubCredentials, repo string) erro
 			return nil
 		}
 
-		status, err := todo.RetrieveGithubStatus(creds, repo)
+		status, err := todo.RetrieveStatus(creds, repo)
 		if err != nil {
 			return err
 		}
 
 		if status == "closed" {
 			fmt.Printf("[CLOSED] %v\n", todo.LogString())
+			// TODO: GitLab link
 			fmt.Printf("Issue link: https://github.com/%s/issues/%s\n", repo, (*todo.ID)[1:])
 
 			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
