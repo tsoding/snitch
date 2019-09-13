@@ -114,7 +114,6 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 
 		if status == "closed" {
 			fmt.Printf("[CLOSED] %v\n", todo.LogString())
-			// TODO: GitLab link
 			fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
 				creds.getHost(), repo, (*todo.ID)[1:])
 

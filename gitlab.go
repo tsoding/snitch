@@ -14,7 +14,6 @@ import (
 // GitlabCredentials contains PersonalToken for GitLab API authorization
 // and Host for possibly implementing support for self-hosted instances
 type GitlabCredentials struct {
-	// TODO: Self-hosted GitLab instance
 	Host          string
 	PersonalToken string
 }
