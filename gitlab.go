@@ -101,7 +101,7 @@ func getGitlabCredentials(creds []IssueAPI) []IssueAPI {
 	}
 
 	if len(tokenEnvar) != 0 {
-		// TODO: Support multiple hosts from ENV
+		// FIXME(#157): Support multiple GitLab hosts from environment variables
 		creds = append(creds, GitlabCredentialsFromToken(tokenEnvar))
 	}
 
