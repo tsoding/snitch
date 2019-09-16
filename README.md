@@ -74,7 +74,7 @@ $ go get github.com/tsoding/snitch
 ```
 
 ## GitHub Credentials
-Snitch obtains credentials from two places:  (default) environment variable or file.
+Snitch obtains GitHub credentials from two places:  (default) environment variable or file.
 
 ### Environment Variable
 `export GITHUB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`
@@ -94,6 +94,32 @@ personal_token = <personal-token>
 Checkout [GitHub Help][personal-token] on how to get the Personal Access Token.
 
 Make sure to enable full access to private repos. For some reason it's required to post issues.
+
+## GitLab Credentials
+
+GitLab credentials configuration is similar to GitHub with an exception that you also have to provide the host of the GitLab instance.
+
+### Environment Variable
+
+`export GITLAB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`. Specifying GitLab host is not supported via environment variables yet.
+
+### File
+
+Config file can be stored in one of the following directories:
+- `$HOME/.config/snitch/gitlab.ini`
+- `$HOME/.snitch/gitlab.ini`
+
+#### Format
+
+```ini
+[gitlab.com]
+personal_token = <personal-token>
+
+[gitlab.local]
+personal_token = <personal-token>
+```
+
+Checkout [GitLab Help][personal-token-gitlab] on how to get the Personal Access Token. Make sure to enable `api` scope for the token.
 
 ## Usage
 
@@ -151,3 +177,4 @@ You can support my work via
 - Patreon: https://www.patreon.com/tsoding
 
 [personal-token]: https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
+[personal-token-gitlab]: https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html
