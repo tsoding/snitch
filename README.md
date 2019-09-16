@@ -101,7 +101,7 @@ GitLab credentials configuration is similar to GitHub with an exception that you
 
 ### Environment Variable
 
-`export GITLAB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`. Specifying GitLab host is not supported via environment variables yet.
+`export GITLAB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`. Specifying GitLab host is not supported via environment variables yet. See [#157](https://github.com/tsoding/snitch/issues/157) for more info.
 
 ### File
 
