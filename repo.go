@@ -7,12 +7,14 @@ import (
 	"net/http"
 )
 
-// IssueAPI requires implementing common API for querying and posting issues
+// Repo requires implementing common API for querying and posting issues
 // regardless of service that's being used.
-type IssueAPI interface {
-	getIssue(repo string, todo Todo) (map[string]interface{}, error)
-	postIssue(repo string, todo Todo, body string) (Todo, error)
+type Repo interface {
+	getIssue(todo Todo) (map[string]interface{}, error)
+	postIssue(todo Todo, body string) (Todo, error)
 	getHost() string
+	getRepositoryAddress() string
+	setRepository(repo string) Repo
 }
 
 // QueryHTTP makes an API query

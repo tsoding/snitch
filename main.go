@@ -3,13 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"gopkg.in/go-ini/ini.v1"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+
+	"gopkg.in/go-ini/ini.v1"
 )
 
 func yOrN(question string) (bool, error) {
@@ -40,7 +41,7 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	})
 }
 
-func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string) error {
+func reportSubcommand(project Project, creds Repo, prependBody string) error {
 	todosToReport := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
@@ -68,8 +69,7 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 	}
 
 	for _, todo := range todosToReport {
-		reportedTodo, err := todo.Report(creds, repo,
-			prependBody+"\n\n"+strings.Join(todo.Body, "\n\n"))
+		reportedTodo, err := todo.Report(creds, prependBody+"\n\n"+strings.Join(todo.Body, "\n\n"))
 
 		if err != nil {
 			return err
@@ -91,7 +91,7 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 	return err
 }
 
-func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
+func purgeSubcommand(project Project, creds Repo) error {
 	todosToRemove := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
@@ -99,15 +99,15 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 			return nil
 		}
 
-		status, err := todo.RetrieveStatus(creds, repo)
+		status, err := todo.RetrieveStatus(creds)
 		if err != nil {
 			return err
 		}
 
 		if status == "closed" {
 			fmt.Printf("[CLOSED] %v\n", todo.LogString())
-			fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
-				creds.getHost(), repo, (*todo.ID)[1:])
+			fmt.Printf("Issue link: %s/issues/%s\n",
+				creds.getRepositoryAddress(), (*todo.ID)[1:])
 
 			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
 
@@ -176,28 +176,28 @@ func locateDotGit(dir string) (string, error) {
 	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo")
 }
 
-func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error) {
+func getRepo(directory string, credentials []Repo) (Repo, error) {
 	dotGit, err := locateDotGit(directory)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	configPath := path.Join(dotGit, "config")
 
 	cfg, err := ini.Load(configPath)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	origin := cfg.Section("remote \"origin\"")
 	if origin == nil {
-		return "", nil, fmt.Errorf("The git repo doesn't have any origin remote. " +
+		return nil, fmt.Errorf("The git repo doesn't have any origin remote. " +
 			"Please use `git remote add' command to add one.")
 	}
 
 	url := origin.Key("url")
 	if url == nil {
-		return "", nil, fmt.Errorf("The origin remote doesn't have any URL's " +
+		return nil, fmt.Errorf("The origin remote doesn't have any URL's " +
 			"associated with it.")
 	}
 
@@ -209,11 +209,11 @@ func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error)
 		groups := hostRegex.FindStringSubmatch(urlString)
 
 		if groups != nil {
-			return groups[1] + "/" + groups[2], creds, nil
+			return creds.setRepository(groups[1] + "/" + groups[2]), nil
 		}
 	}
 
-	return "", nil, fmt.Errorf("%s does not match any of the hosts", urlString)
+	return nil, fmt.Errorf("%s does not match any of the hosts", urlString)
 }
 
 func parseParams(args []string) (map[string]string, error) {
@@ -278,8 +278,8 @@ func handleError(err error) {
 	}
 }
 
-func getCredentials() []IssueAPI {
-	creds := []IssueAPI{}
+func getCredentials() []Repo {
+	creds := []Repo{}
 
 	if github, err := getGithubCredentials(); err == nil {
 		creds = append(creds, github)
@@ -296,7 +296,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	repo, creds, err := getRepo(".", allCredentials)
+	creds, err := getRepo(".", allCredentials)
 	handleError(err)
 
 	projectPath, err := locateProject(".")
@@ -346,14 +346,14 @@ func main() {
 				prependBody = ""
 			}
 
-			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
+			fmt.Printf("Detected project: %s\n", creds.getRepositoryAddress())
 
-			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
+			if err = reportSubcommand(*project, creds, prependBody); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 		case "purge":
-			if err = purgeSubcommand(*project, creds, repo); err != nil {
+			if err = purgeSubcommand(*project, creds); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}

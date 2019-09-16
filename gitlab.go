@@ -2,20 +2,23 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/go-ini/ini.v1"
 	"net/http"
 	"net/url"
 	"os"
 	"os/user"
 	"path"
 	"strconv"
+
+	"gopkg.in/go-ini/ini.v1"
 )
 
-// GitlabCredentials contains PersonalToken for GitLab API authorization
-// and Host for possibly implementing support for self-hosted instances
+// GitlabCredentials contains PersonalToken for GitLab API authorization,
+// Host for implementing support for self-hosted instances and
+// Repository
 type GitlabCredentials struct {
-	Host          string
 	PersonalToken string
+	Host          string
+	Repository    string
 }
 
 func (creds GitlabCredentials) query(method, url string) (map[string]interface{}, error) {
@@ -28,11 +31,11 @@ func (creds GitlabCredentials) query(method, url string) (map[string]interface{}
 	return QueryHTTP(req)
 }
 
-func (creds GitlabCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
+func (creds GitlabCredentials) getIssue(todo Todo) (map[string]interface{}, error) {
 	json, err := creds.query(
 		"GET",
 		// FIXME(#156): possible GitLab API injection attack
-		"https://"+creds.Host+"/api/v4/projects/"+url.QueryEscape(repo)+"/issues/"+(*todo.ID)[1:]) // self-hosted
+		"https://"+creds.Host+"/api/v4/projects/"+url.QueryEscape(creds.Repository)+"/issues/"+(*todo.ID)[1:]) // self-hosted
 
 	if err != nil {
 		return nil, err
@@ -41,14 +44,14 @@ func (creds GitlabCredentials) getIssue(repo string, todo Todo) (map[string]inte
 	return json, nil
 }
 
-func (creds GitlabCredentials) postIssue(repo string, todo Todo, body string) (Todo, error) {
+func (creds GitlabCredentials) postIssue(todo Todo, body string) (Todo, error) {
 	params := url.Values{}
 	params.Add("title", todo.Title)
 	params.Add("description", body)
 
 	json, err := creds.query(
 		"POST",
-		"https://"+creds.Host+"/api/v4/projects/"+url.QueryEscape(repo)+"/issues?"+params.Encode()) // self-hosted
+		"https://"+creds.Host+"/api/v4/projects/"+url.QueryEscape(creds.Repository)+"/issues?"+params.Encode()) // self-hosted
 	if err != nil {
 		return todo, err
 	}
@@ -61,6 +64,18 @@ func (creds GitlabCredentials) postIssue(repo string, todo Todo, body string) (T
 
 func (creds GitlabCredentials) getHost() string {
 	return creds.Host
+}
+
+func (creds GitlabCredentials) getRepositoryAddress() string {
+	return "https://" + creds.Host + "/" + creds.Repository
+}
+
+func (creds GitlabCredentials) setRepository(repo string) Repo {
+	return GitlabCredentials{
+		Host:          creds.Host,
+		PersonalToken: creds.PersonalToken,
+		Repository:    repo,
+	}
 }
 
 // GitlabCredentialsFromFile gets GitlabCredentials from a filepath
@@ -90,7 +105,7 @@ func GitlabCredentialsFromToken(token string) GitlabCredentials {
 	}
 }
 
-func getGitlabCredentials(creds []IssueAPI) []IssueAPI {
+func getGitlabCredentials(creds []Repo) []Repo {
 	tokenEnvar := os.Getenv("GITLAB_PERSONAL_TOKEN")
 	xdgEnvar := os.Getenv("XDG_CONFIG_HOME")
 	usr, err := user.Current()

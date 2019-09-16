@@ -155,8 +155,8 @@ func (todo Todo) GitCommit(prefix string) error {
 
 // RetrieveStatus retrieves the current status of TODOs issue
 // from GitHub (works for GitLab API too)
-func (todo Todo) RetrieveStatus(creds IssueAPI, repo string) (string, error) {
-	json, err := creds.getIssue(repo, todo)
+func (todo Todo) RetrieveStatus(creds Repo) (string, error) {
+	json, err := creds.getIssue(todo)
 
 	if err != nil {
 		return "", err
@@ -167,6 +167,6 @@ func (todo Todo) RetrieveStatus(creds IssueAPI, repo string) (string, error) {
 
 // Report reports the todo as an Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
-func (todo Todo) Report(creds IssueAPI, repo string, body string) (Todo, error) {
-	return creds.postIssue(repo, todo, body)
+func (todo Todo) Report(creds Repo, body string) (Todo, error) {
+	return creds.postIssue(todo, body)
 }

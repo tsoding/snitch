@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
 	"os/exec"
 	"regexp"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 // TransformRule defines a title transformation rule
