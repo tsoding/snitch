@@ -68,16 +68,8 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 	}
 
 	for _, todo := range todosToReport {
-		var newline string = ""
-		switch creds.(type) {
-		case GitlabCredentials:
-			newline = "\n\n"
-		case GithubCredentials:
-			newline = "\n"
-		}
-
 		reportedTodo, err := todo.Report(creds, repo,
-			prependBody+newline+strings.Join(todo.Body, newline))
+			prependBody+"\n\n"+strings.Join(todo.Body, "\n\n"))
 
 		if err != nil {
 			return err
