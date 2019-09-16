@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 )
 
@@ -154,14 +153,10 @@ func (todo Todo) GitCommit(prefix string) error {
 	return nil
 }
 
-// RetrieveGithubStatus retrieves the current status of TODOs issue
-// from GitHub
-func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (string, error) {
-	json, err := creds.QueryGithubAPI(
-		"GET",
-		// FIXME(#59): possible GitHub API injection attack
-		"https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:],
-		nil)
+// RetrieveStatus retrieves the current status of TODOs issue
+// from GitHub (works for GitLab API too)
+func (todo Todo) RetrieveStatus(creds IssueAPI, repo string) (string, error) {
+	json, err := creds.getIssue(repo, todo)
 
 	if err != nil {
 		return "", err
@@ -170,22 +165,8 @@ func (todo Todo) RetrieveGithubStatus(creds GithubCredentials, repo string) (str
 	return json["state"].(string), nil
 }
 
-// ReportTodo reports the todo as a Github Issue, updates the file
+// Report reports the todo as an Issue, updates the file
 // where the todo is located and commits the changes to the git repo.
-func (todo Todo) ReportTodo(creds GithubCredentials, repo string, body string) (Todo, error) {
-	json, err := creds.QueryGithubAPI(
-		"POST",
-		"https://api.github.com/repos/"+repo+"/issues",
-		map[string]interface{}{
-			"title": todo.Title,
-			"body":  body,
-		})
-	if err != nil {
-		return todo, err
-	}
-
-	id := "#" + strconv.Itoa(int(json["number"].(float64)))
-	todo.ID = &id
-
-	return todo, err
+func (todo Todo) Report(creds IssueAPI, repo string, body string) (Todo, error) {
+	return creds.postIssue(repo, todo, body)
 }

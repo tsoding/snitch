@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"os"
-	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -41,7 +40,7 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	})
 }
 
-func reportSubcommand(project Project, creds GithubCredentials, repo string, prependBody string) error {
+func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string) error {
 	todosToReport := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
@@ -69,7 +68,8 @@ func reportSubcommand(project Project, creds GithubCredentials, repo string, pre
 	}
 
 	for _, todo := range todosToReport {
-		reportedTodo, err := todo.ReportTodo(creds, repo, prependBody+"\n"+strings.Join(todo.Body, "\n"))
+		reportedTodo, err := todo.Report(creds, repo,
+			prependBody+"\n\n"+strings.Join(todo.Body, "\n\n"))
 
 		if err != nil {
 			return err
@@ -91,7 +91,7 @@ func reportSubcommand(project Project, creds GithubCredentials, repo string, pre
 	return err
 }
 
-func purgeSubcommand(project Project, creds GithubCredentials, repo string) error {
+func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 	todosToRemove := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
@@ -99,14 +99,15 @@ func purgeSubcommand(project Project, creds GithubCredentials, repo string) erro
 			return nil
 		}
 
-		status, err := todo.RetrieveGithubStatus(creds, repo)
+		status, err := todo.RetrieveStatus(creds, repo)
 		if err != nil {
 			return err
 		}
 
 		if status == "closed" {
 			fmt.Printf("[CLOSED] %v\n", todo.LogString())
-			fmt.Printf("Issue link: https://github.com/%s/issues/%s\n", repo, (*todo.ID)[1:])
+			fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
+				creds.getHost(), repo, (*todo.ID)[1:])
 
 			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
 
@@ -175,45 +176,44 @@ func locateDotGit(dir string) (string, error) {
 	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo")
 }
 
-func repoFromConfig(configPath string) (string, error) {
+func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error) {
+	dotGit, err := locateDotGit(directory)
+	if err != nil {
+		return "", nil, err
+	}
+
+	configPath := path.Join(dotGit, "config")
+
 	cfg, err := ini.Load(configPath)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	origin := cfg.Section("remote \"origin\"")
 	if origin == nil {
-		return "", fmt.Errorf("The git repo doesn't have any origin remote. " +
+		return "", nil, fmt.Errorf("The git repo doesn't have any origin remote. " +
 			"Please use `git remote add' command to add one.")
 	}
 
 	url := origin.Key("url")
 	if url == nil {
-		return "", fmt.Errorf("The origin remote doesn't have any URL's " +
+		return "", nil, fmt.Errorf("The origin remote doesn't have any URL's " +
 			"associated with it.")
 	}
 
 	urlString := url.String()
 
-	githubRepoRegexp := regexp.MustCompile(
-		"github.com[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
-	groups := githubRepoRegexp.FindStringSubmatch(urlString)
+	for _, creds := range credentials {
+		hostRegex := regexp.MustCompile(
+			creds.getHost() + "[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
+		groups := hostRegex.FindStringSubmatch(urlString)
 
-	if groups != nil {
-		return groups[1] + "/" + groups[2], nil
+		if groups != nil {
+			return groups[1] + "/" + groups[2], creds, nil
+		}
 	}
 
-	return "", fmt.Errorf("%s does not match %v",
-		urlString, githubRepoRegexp)
-}
-
-func getGithubRepo(directory string) (string, error) {
-	dotGit, err := locateDotGit(directory)
-	if err != nil {
-		return "", err
-	}
-
-	return repoFromConfig(path.Join(dotGit, "config"))
+	return "", nil, fmt.Errorf("%s does not match any of the hosts", urlString)
 }
 
 func parseParams(args []string) (map[string]string, error) {
@@ -271,82 +271,48 @@ func locateProject(directory string) (string, error) {
 	return path.Join(filepath.Dir(dotGit), ".snitch.yaml"), nil
 }
 
-func getGithubCredentials() (GithubCredentials, error) {
-	tokenEnvar := os.Getenv("GITHUB_PERSONAL_TOKEN")
-	xdgEnvar := os.Getenv("XDG_CONFIG_HOME")
-	usr, err := user.Current()
-
+func handleError(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
 
-	if len(tokenEnvar) != 0 {
-		return GithubCredentialsFromToken(tokenEnvar), nil
+func getCredentials() []IssueAPI {
+	creds := []IssueAPI{}
+
+	if github, err := getGithubCredentials(); err == nil {
+		creds = append(creds, github)
 	}
+	creds = getGitlabCredentials(creds)
 
-	// custom XDG_CONFIG_HOME
-	if len(xdgEnvar) != 0 {
-		filePath := path.Join(xdgEnvar, "snitch/github.ini")
-		if _, err := os.Stat(filePath); err == nil {
-			return GithubCredentialsFromFile(filePath)
-		}
-	}
-
-	// default XDG_CONFIG_HOME
-	if len(xdgEnvar) == 0 {
-		filePath := path.Join(usr.HomeDir, ".config/snitch/github.ini")
-		if _, err := os.Stat(filePath); err == nil {
-			return GithubCredentialsFromFile(filePath)
-		}
-	}
-
-	filePath := path.Join(usr.HomeDir, ".snitch/github.ini")
-	if _, err := os.Stat(filePath); err == nil {
-		return GithubCredentialsFromFile(filePath)
-	}
-
-	return GithubCredentials{}, fmt.Errorf("GitHub token is missing")
+	return creds
 }
 
 func main() {
-	creds, err := getGithubCredentials()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	allCredentials := getCredentials()
+	if len(allCredentials) == 0 {
+		fmt.Fprintln(os.Stderr, "No credentials have been found")
 		os.Exit(1)
 	}
 
-	repo, err := getGithubRepo(".")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	repo, creds, err := getRepo(".", allCredentials)
+	handleError(err)
 
 	projectPath, err := locateProject(".")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	handleError(err)
+
 	project, err := NewProject(projectPath)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	handleError(err)
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
 			params, err := parseParams(os.Args[2:])
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			handleError(err)
 
 			err = checkParams(params, []string{"unreported", "reported"})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			handleError(err)
 			_, unreported := params["unreported"]
 			_, reported := params["reported"]
 
@@ -363,16 +329,10 @@ func main() {
 
 				return filter
 			})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			handleError(err)
 		case "report":
 			params, err := parseParams(os.Args[2:])
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			handleError(err)
 
 			err = checkParams(params, []string{"prepend-body"})
 			if err != nil {
@@ -386,7 +346,7 @@ func main() {
 				prependBody = ""
 			}
 
-			fmt.Printf("Detected GitHub project: https://github.com/%s\n", repo)
+			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
 
 			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
 				fmt.Fprintln(os.Stderr, err)
