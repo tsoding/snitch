@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/go-ini/ini.v1"
 	"net/http"
 	"net/url"
 	"os"
 	"os/user"
 	"path"
 	"strconv"
+	"strings"
+
+	"gopkg.in/go-ini/ini.v1"
 )
 
 // GitlabCredentials contains PersonalToken for GitLab API authorization
@@ -83,11 +85,24 @@ func GitlabCredentialsFromFile(filepath string) []GitlabCredentials {
 }
 
 // GitlabCredentialsFromToken returns a GitlabCredentials from a string token
-func GitlabCredentialsFromToken(token string) GitlabCredentials {
-	return GitlabCredentials{
-		Host:          "gitlab.com",
-		PersonalToken: token,
+func GitlabCredentialsFromToken(token string) (GitlabCredentials, error) {
+	credentials := strings.Split(token, ":")
+
+	switch len(credentials) {
+	case 1:
+		return GitlabCredentials{
+			Host:          "gitlab.com",
+			PersonalToken: credentials[0],
+		}, nil
+	case 2:
+		return GitlabCredentials{
+			Host:          credentials[0],
+			PersonalToken: credentials[1],
+		}, nil
+	default:
+		return GitlabCredentials{}, fmt.Errorf("Couldn't parse credentials")
 	}
+
 }
 
 func getGitlabCredentials(creds []IssueAPI) []IssueAPI {
@@ -101,8 +116,12 @@ func getGitlabCredentials(creds []IssueAPI) []IssueAPI {
 	}
 
 	if len(tokenEnvar) != 0 {
-		// FIXME(#157): Support multiple GitLab hosts from environment variables
-		creds = append(creds, GitlabCredentialsFromToken(tokenEnvar))
+		for _, credential := range strings.Split(tokenEnvar, ",") {
+			parsedCredentials, err := GitlabCredentialsFromToken(credential)
+			if err == nil {
+				creds = append(creds, parsedCredentials)
+			}
+		}
 	}
 
 	// custom XDG_CONFIG_HOME
