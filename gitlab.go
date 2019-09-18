@@ -100,7 +100,8 @@ func GitlabCredentialsFromToken(token string) (GitlabCredentials, error) {
 			PersonalToken: credentials[1],
 		}, nil
 	default:
-		return GitlabCredentials{}, fmt.Errorf("Couldn't parse credentials")
+		return GitlabCredentials{},
+			fmt.Errorf("Couldn't parse GitLab credentials from ENV: %s", token)
 	}
 
 }
@@ -118,9 +119,11 @@ func getGitlabCredentials(creds []IssueAPI) []IssueAPI {
 	if len(tokenEnvar) != 0 {
 		for _, credential := range strings.Split(tokenEnvar, ",") {
 			parsedCredentials, err := GitlabCredentialsFromToken(credential)
-			if err == nil {
-				creds = append(creds, parsedCredentials)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				continue
 			}
+			creds = append(creds, parsedCredentials)
 		}
 	}
 
