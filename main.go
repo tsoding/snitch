@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
+	"io/ioutil"
 	"os"
+	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -176,6 +178,43 @@ func locateDotGit(dir string) (string, error) {
 	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo")
 }
 
+func getURLAliases() (map[string]string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	path := path.Join(usr.HomeDir, ".gitconfig")
+	configArr, err := ioutil.ReadFile(path)
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	configStr := string(configArr)
+	regex := regexp.MustCompile("\\[url \"([-\\w]+)@(github.com[:]?|gitlab.com[:]?)\"\\]")
+	regexResult := regex.FindAllStringSubmatch(configStr, -1)
+
+	cfgIni, err := ini.Load(path)
+	if err != nil {
+		return map[string]string{}, err
+	}
+
+	aliases := map[string]string{}
+
+	for _, elem := range regexResult {
+		sectionName := elem[0][1 : len(elem[0])-1]
+		section := cfgIni.Section(sectionName)
+		key, err := section.GetKey("insteadOf")
+		if err != nil {
+			return map[string]string{}, err
+		}
+
+		aliases[key.Value()] = sectionName[5 : len(sectionName)-1]
+	}
+
+	return aliases, nil
+}
+
 func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error) {
 	dotGit, err := locateDotGit(directory)
 	if err != nil {
@@ -201,7 +240,18 @@ func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error)
 			"associated with it.")
 	}
 
+	aliases, err := getURLAliases()
+	if err != nil {
+		return "", nil, err
+	}
+
 	urlString := url.String()
+
+	for key, value := range aliases {
+		if strings.Contains(urlString, key) {
+			urlString = strings.Replace(urlString, key, value, 1)
+		}
+	}
 
 	for _, creds := range credentials {
 		hostRegex := regexp.MustCompile(
