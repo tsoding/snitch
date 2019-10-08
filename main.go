@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
@@ -185,31 +184,29 @@ func getURLAliases() (map[string]string, error) {
 	}
 
 	path := path.Join(usr.HomeDir, ".gitconfig")
-	configArr, err := ioutil.ReadFile(path)
+
+	cfg, err := ini.Load(path)
 	if err != nil {
 		return map[string]string{}, err
 	}
 
-	configStr := string(configArr)
-	regex := regexp.MustCompile("\\[url \"([-\\w]+)@(github.com[:]?|gitlab.com[:]?)\"\\]")
-	regexResult := regex.FindAllStringSubmatch(configStr, -1)
-
-	cfgIni, err := ini.Load(path)
-	if err != nil {
-		return map[string]string{}, err
-	}
-
+	sections := cfg.Sections()
 	aliases := map[string]string{}
 
-	for _, elem := range regexResult {
-		sectionName := elem[0][1 : len(elem[0])-1]
-		section := cfgIni.Section(sectionName)
-		key, err := section.GetKey("insteadOf")
-		if err != nil {
-			return map[string]string{}, err
-		}
+	for _, elem := range sections {
+		name := elem.Name()
+		isUrlSection := strings.Contains(name, "url")
+		hasHostName := strings.Contains(name, "github") || strings.Contains(name, "gitlab")
 
-		aliases[key.Value()] = sectionName[5 : len(sectionName)-1]
+		if isUrlSection && hasHostName {
+			section := cfg.Section(name)
+			key, err := section.GetKey("insteadOf")
+			if err != nil {
+				return map[string]string{}, err
+			}
+
+			aliases[key.Value()] = name[5 : len(name)-1]
+		}
 	}
 
 	return aliases, nil
