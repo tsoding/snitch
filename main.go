@@ -195,10 +195,10 @@ func getURLAliases() (map[string]string, error) {
 
 	for _, elem := range sections {
 		name := elem.Name()
-		isUrlSection := strings.Contains(name, "url")
+		isURLSection := strings.Contains(name, "url")
 		hasHostName := strings.Contains(name, "github") || strings.Contains(name, "gitlab")
 
-		if isUrlSection && hasHostName {
+		if isURLSection && hasHostName {
 			section := cfg.Section(name)
 			key, err := section.GetKey("insteadOf")
 			if err != nil {
