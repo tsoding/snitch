@@ -205,7 +205,10 @@ func getURLAliases() (map[string]string, error) {
 				return map[string]string{}, err
 			}
 
-			aliases[key.Value()] = name[5 : len(name)-1]
+			regex := regexp.MustCompile("[-\\w]+@(github.com|gitlab.com)[^\"]+")
+			resolvedAlias := regex.FindString(name)
+
+			aliases[key.Value()] = resolvedAlias
 		}
 	}
 
@@ -247,6 +250,7 @@ func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error)
 	for key, value := range aliases {
 		if strings.Contains(urlString, key) {
 			urlString = strings.Replace(urlString, key, value, 1)
+			break
 		}
 	}
 
