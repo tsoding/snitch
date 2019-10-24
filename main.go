@@ -194,21 +194,19 @@ func getURLAliases() (map[string]string, error) {
 	aliases := map[string]string{}
 
 	for _, elem := range sections {
-		name := elem.Name()
-		isURLSection := strings.Contains(name, "url")
-		hasHostName := strings.Contains(name, "github") || strings.Contains(name, "gitlab")
+		sectionName := elem.Name()
 
-		if isURLSection && hasHostName {
-			section := cfg.Section(name)
-			key, err := section.GetKey("insteadOf")
+		regex := regexp.MustCompile("url \"([-\\w]+@[github.com|gitlab.com][^\"]+)\"")
+		urlSections := regex.FindAllStringSubmatch(sectionName, -1)
+
+		for _, elem := range urlSections {
+			section := cfg.Section(elem[0])
+			alias, err := section.GetKey("insteadOf")
 			if err != nil {
 				return map[string]string{}, err
 			}
 
-			regex := regexp.MustCompile("[-\\w]+@(github.com|gitlab.com)[^\"]+")
-			resolvedAlias := regex.FindString(name)
-
-			aliases[key.Value()] = resolvedAlias
+			aliases[alias.Value()] = elem[1]
 		}
 	}
 
