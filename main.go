@@ -180,14 +180,14 @@ func locateDotGit(dir string) (string, error) {
 func getURLAliases() (map[string]string, error) {
 	usr, err := user.Current()
 	if err != nil {
-		return map[string]string{}, err
+		return map[string]string{}, nil
 	}
 
 	path := path.Join(usr.HomeDir, ".gitconfig")
 
 	cfg, err := ini.Load(path)
 	if err != nil {
-		return map[string]string{}, err
+		return map[string]string{}, nil
 	}
 
 	sections := cfg.Sections()
@@ -203,7 +203,7 @@ func getURLAliases() (map[string]string, error) {
 			section := cfg.Section(elem[0])
 			alias, err := section.GetKey("insteadOf")
 			if err != nil {
-				return map[string]string{}, err
+				return map[string]string{}, nil
 			}
 
 			aliases[alias.Value()] = elem[1]
