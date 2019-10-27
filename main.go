@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"os"
+	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -176,6 +177,42 @@ func locateDotGit(dir string) (string, error) {
 	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo")
 }
 
+func getURLAliases() (map[string]string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return map[string]string{}, nil
+	}
+
+	path := path.Join(usr.HomeDir, ".gitconfig")
+
+	cfg, err := ini.Load(path)
+	if err != nil {
+		return map[string]string{}, nil
+	}
+
+	sections := cfg.Sections()
+	aliases := map[string]string{}
+
+	for _, elem := range sections {
+		sectionName := elem.Name()
+
+		regex := regexp.MustCompile("url \"([-\\w]+@[github.com|gitlab.com][^\"]+)\"")
+		urlSections := regex.FindAllStringSubmatch(sectionName, -1)
+
+		for _, elem := range urlSections {
+			section := cfg.Section(elem[0])
+			alias, err := section.GetKey("insteadOf")
+			if err != nil {
+				return map[string]string{}, nil
+			}
+
+			aliases[alias.Value()] = elem[1]
+		}
+	}
+
+	return aliases, nil
+}
+
 func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error) {
 	dotGit, err := locateDotGit(directory)
 	if err != nil {
@@ -201,7 +238,19 @@ func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error)
 			"associated with it.")
 	}
 
+	aliases, err := getURLAliases()
+	if err != nil {
+		return "", nil, err
+	}
+
 	urlString := url.String()
+
+	for key, value := range aliases {
+		if strings.Contains(urlString, key) {
+			urlString = strings.Replace(urlString, key, value, 1)
+			break
+		}
+	}
 
 	for _, creds := range credentials {
 		hostRegex := regexp.MustCompile(
