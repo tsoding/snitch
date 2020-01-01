@@ -2,3 +2,4 @@ snitch
 main
 src/
 bin/
+*~

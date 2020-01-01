@@ -213,7 +213,12 @@ func getURLAliases() (map[string]string, error) {
 	return aliases, nil
 }
 
-func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error) {
+func getRepo(directory string) (string, IssueAPI, error) {
+	credentials := getCredentials()
+	if len(credentials) == 0 {
+		return "", nil, fmt.Errorf("No credentials have been found. Read https://github.com/tsoding/snitch#credentials")
+	}
+
 	dotGit, err := locateDotGit(directory)
 	if err != nil {
 		return "", nil, err
@@ -319,7 +324,7 @@ func locateProject(directory string) (string, error) {
 	return filepath.Dir(dotGit), nil
 }
 
-func handleError(err error) {
+func exitOnError(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -338,29 +343,20 @@ func getCredentials() []IssueAPI {
 }
 
 func main() {
-	allCredentials := getCredentials()
-	if len(allCredentials) == 0 {
-		fmt.Fprintln(os.Stderr, "No credentials have been found")
-		os.Exit(1)
-	}
-
-	repo, creds, err := getRepo(".", allCredentials)
-	handleError(err)
-
 	projectPath, err := locateProject(".")
-	handleError(err)
+	exitOnError(err)
 
 	project, err := NewProject(projectPath)
-	handleError(err)
+	exitOnError(err)
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
 			params, err := parseParams(os.Args[2:])
-			handleError(err)
+			exitOnError(err)
 
 			err = checkParams(params, []string{"unreported", "reported"})
-			handleError(err)
+			exitOnError(err)
 			_, unreported := params["unreported"]
 			_, reported := params["reported"]
 
@@ -377,10 +373,10 @@ func main() {
 
 				return filter
 			})
-			handleError(err)
+			exitOnError(err)
 		case "report":
 			params, err := parseParams(os.Args[2:])
-			handleError(err)
+			exitOnError(err)
 
 			err = checkParams(params, []string{"prepend-body"})
 			if err != nil {
@@ -394,6 +390,9 @@ func main() {
 				prependBody = ""
 			}
 
+			repo, creds, err := getRepo(".")
+			exitOnError(err)
+
 			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
 
 			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
@@ -401,6 +400,9 @@ func main() {
 				os.Exit(1)
 			}
 		case "purge":
+			repo, creds, err := getRepo(".")
+			exitOnError(err)
+
 			if err = purgeSubcommand(*project, creds, repo); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
