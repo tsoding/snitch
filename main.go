@@ -338,14 +338,6 @@ func getCredentials() []IssueAPI {
 }
 
 func main() {
-	allCredentials := getCredentials()
-	if len(allCredentials) == 0 {
-		exitOnError(fmt.Errorf("No credentials have been found"))
-	}
-
-	repo, creds, err := getRepo(".", allCredentials)
-	exitOnError(err)
-
 	projectPath, err := locateProject(".")
 	exitOnError(err)
 
@@ -378,6 +370,14 @@ func main() {
 			})
 			exitOnError(err)
 		case "report":
+			allCredentials := getCredentials()
+			if len(allCredentials) == 0 {
+				exitOnError(fmt.Errorf("No credentials have been found"))
+			}
+
+			repo, creds, err := getRepo(".", allCredentials)
+			exitOnError(err)
+
 			params, err := parseParams(os.Args[2:])
 			exitOnError(err)
 
@@ -400,6 +400,14 @@ func main() {
 				os.Exit(1)
 			}
 		case "purge":
+			allCredentials := getCredentials()
+			if len(allCredentials) == 0 {
+				exitOnError(fmt.Errorf("No credentials have been found"))
+			}
+
+			repo, creds, err := getRepo(".", allCredentials)
+			exitOnError(err)
+
 			if err = purgeSubcommand(*project, creds, repo); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
