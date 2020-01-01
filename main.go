@@ -319,7 +319,7 @@ func locateProject(directory string) (string, error) {
 	return filepath.Dir(dotGit), nil
 }
 
-func handleError(err error) {
+func exitOnError(err error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -345,22 +345,22 @@ func main() {
 	}
 
 	repo, creds, err := getRepo(".", allCredentials)
-	handleError(err)
+	exitOnError(err)
 
 	projectPath, err := locateProject(".")
-	handleError(err)
+	exitOnError(err)
 
 	project, err := NewProject(projectPath)
-	handleError(err)
+	exitOnError(err)
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "list":
 			params, err := parseParams(os.Args[2:])
-			handleError(err)
+			exitOnError(err)
 
 			err = checkParams(params, []string{"unreported", "reported"})
-			handleError(err)
+			exitOnError(err)
 			_, unreported := params["unreported"]
 			_, reported := params["reported"]
 
@@ -377,10 +377,10 @@ func main() {
 
 				return filter
 			})
-			handleError(err)
+			exitOnError(err)
 		case "report":
 			params, err := parseParams(os.Args[2:])
-			handleError(err)
+			exitOnError(err)
 
 			err = checkParams(params, []string{"prepend-body"})
 			if err != nil {
