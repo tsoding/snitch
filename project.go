@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 )
 
@@ -211,6 +212,18 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 	return err
 }
 
+func yamlConfigPath(projectPath string) (string, bool) {
+	for _, suffix := range [2]string{"yaml", "yml"} {
+		path := path.Join(projectPath, fmt.Sprintf(".snitch.%s", suffix))
+
+		if stat, err := os.Stat(path); !os.IsNotExist(err) && !stat.IsDir() {
+			return path, true
+		}
+	}
+
+	return "", false
+}
+
 // NewProject constructs the Project from a YAML file
 func NewProject(filePath string) (*Project, error) {
 	project := &Project{
@@ -220,9 +233,8 @@ func NewProject(filePath string) (*Project, error) {
 		Keywords: []string{},
 	}
 
-	// FIXME(#149): snitch does not work without .snitch.yaml
-	if stat, err := os.Stat(filePath); !os.IsNotExist(err) && !stat.IsDir() {
-		configFile, err := os.Open(filePath)
+	if configPath, ok := yamlConfigPath(filePath); ok {
+		configFile, err := os.Open(configPath)
 		if err != nil {
 			return nil, err
 		}
@@ -231,7 +243,7 @@ func NewProject(filePath string) (*Project, error) {
 		yamlDecoder := yaml.NewDecoder(configFile)
 		err = yamlDecoder.Decode(&project)
 		if err != nil {
-			return nil, errors.Wrap(err, filePath)
+			return nil, errors.Wrap(err, configPath)
 		}
 	}
 
