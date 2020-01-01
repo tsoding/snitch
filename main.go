@@ -340,8 +340,7 @@ func getCredentials() []IssueAPI {
 func main() {
 	allCredentials := getCredentials()
 	if len(allCredentials) == 0 {
-		fmt.Fprintln(os.Stderr, "No credentials have been found")
-		os.Exit(1)
+		exitOnError(fmt.Errorf("No credentials have been found"))
 	}
 
 	repo, creds, err := getRepo(".", allCredentials)
