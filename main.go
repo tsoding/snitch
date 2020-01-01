@@ -213,7 +213,12 @@ func getURLAliases() (map[string]string, error) {
 	return aliases, nil
 }
 
-func getRepo(directory string, credentials []IssueAPI) (string, IssueAPI, error) {
+func getRepo(directory string) (string, IssueAPI, error) {
+	credentials := getCredentials()
+	if len(credentials) == 0 {
+		return "", nil, fmt.Errorf("No credentials have been found. Read https://github.com/tsoding/snitch#credentials")
+	}
+
 	dotGit, err := locateDotGit(directory)
 	if err != nil {
 		return "", nil, err
@@ -370,14 +375,6 @@ func main() {
 			})
 			exitOnError(err)
 		case "report":
-			allCredentials := getCredentials()
-			if len(allCredentials) == 0 {
-				exitOnError(fmt.Errorf("No credentials have been found"))
-			}
-
-			repo, creds, err := getRepo(".", allCredentials)
-			exitOnError(err)
-
 			params, err := parseParams(os.Args[2:])
 			exitOnError(err)
 
@@ -393,6 +390,9 @@ func main() {
 				prependBody = ""
 			}
 
+			repo, creds, err := getRepo(".")
+			exitOnError(err)
+
 			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
 
 			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
@@ -400,12 +400,7 @@ func main() {
 				os.Exit(1)
 			}
 		case "purge":
-			allCredentials := getCredentials()
-			if len(allCredentials) == 0 {
-				exitOnError(fmt.Errorf("No credentials have been found"))
-			}
-
-			repo, creds, err := getRepo(".", allCredentials)
+			repo, creds, err := getRepo(".")
 			exitOnError(err)
 
 			if err = purgeSubcommand(*project, creds, repo); err != nil {
