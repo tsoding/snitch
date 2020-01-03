@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"
@@ -188,28 +191,34 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 		return err
 	}
 
-	scanner := bufio.NewScanner(&outb)
+	g, ctx := errgroup.WithContext(context.Background())
+	// FIXME: Arbitrary max weight for preventing "too many open files" error
+	// This has to do with big projects and the limit of number of open file
+	// descriptors that a process may have at any given time.
+	sem := semaphore.NewWeighted(1024)
 
-	for scanner.Scan() {
+	for scanner := bufio.NewScanner(&outb); scanner.Scan(); {
 		filepath := scanner.Text()
 
 		stat, err := os.Stat(filepath)
 		if err != nil {
 			return err
 		}
-
-		if !stat.IsDir() {
-			err = project.WalkTodosOfFile(filepath, visit)
-			if err != nil {
-				return err
-			}
-		} else {
+		if stat.IsDir() {
 			// FIXME(#145): snitch should go inside of git submodules recursively
 			fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
+			continue
 		}
+
+		sem.Acquire(ctx, 1)
+		g.Go(func() error {
+			defer sem.Release(1)
+			// FIXME: Don't visit a path if it's other than source code (e.g. images, music)
+			return project.WalkTodosOfFile(filepath, visit)
+		})
 	}
 
-	return err
+	return g.Wait()
 }
 
 func yamlConfigPath(projectPath string) (string, bool) {
