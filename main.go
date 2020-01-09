@@ -23,6 +23,7 @@ func yOrN(question string) (bool, error) {
 	for err == nil && text != "y" && text != "n" {
 		fmt.Printf("%s [y/n] ", question)
 		text, err = reader.ReadString('\n')
+		text = strings.TrimSpace(text)
 	}
 
 	if err != nil || text == "n" {
