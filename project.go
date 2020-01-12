@@ -192,7 +192,7 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 	}
 
 	g, ctx := errgroup.WithContext(context.Background())
-	// FIXME: Arbitrary max weight for preventing "too many open files" error
+	// FIXME: Find the max weight for preventing "too many open files" error
 	// This has to do with big projects and the limit of number of open file
 	// descriptors that a process may have at any given time.
 	sem := semaphore.NewWeighted(1024)
