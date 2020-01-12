@@ -213,7 +213,6 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 		sem.Acquire(ctx, 1)
 		g.Go(func() error {
 			defer sem.Release(1)
-			// FIXME: Don't visit a path if it's other than source code (e.g. images, music)
 			return project.WalkTodosOfFile(filepath, visit)
 		})
 	}
