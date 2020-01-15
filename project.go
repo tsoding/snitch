@@ -6,14 +6,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
-	"golang.org/x/sync/errgroup"
-	"golang.org/x/sync/semaphore"
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"
 	"os/exec"
 	"path"
 	"regexp"
+	"runtime"
+	"sync"
 )
 
 // TransformRule defines a title transformation rule
@@ -191,33 +191,55 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 		return err
 	}
 
-	g, ctx := errgroup.WithContext(context.Background())
-	// FIXME: Find the max weight for preventing "too many open files" error
-	// This has to do with big projects and the limit of number of open file
-	// descriptors that a process may have at any given time.
-	sem := semaphore.NewWeighted(1024)
+	ctx, cancel := context.WithCancel(context.Background())
+	work := make(chan string)
+	var workers sync.WaitGroup
 
-	for scanner := bufio.NewScanner(&outb); scanner.Scan(); {
-		filepath := scanner.Text()
+	for i := 0; i < runtime.NumCPU(); i++ {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
 
-		stat, err := os.Stat(filepath)
-		if err != nil {
-			return err
-		}
-		if stat.IsDir() {
-			// FIXME(#145): snitch should go inside of git submodules recursively
-			fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
-			continue
-		}
+			var stat os.FileInfo
+			for filepath := range work {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
 
-		sem.Acquire(ctx, 1)
-		g.Go(func() error {
-			defer sem.Release(1)
-			return project.WalkTodosOfFile(filepath, visit)
-		})
+				stat, err = os.Stat(filepath)
+				if err != nil {
+					cancel()
+					return
+				}
+				if stat.IsDir() {
+					// FIXME(#145): snitch should go inside of git submodules recursively
+					fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
+					continue
+				}
+
+				if err = project.WalkTodosOfFile(filepath, visit); err != nil {
+					cancel()
+				}
+			}
+		}()
 	}
 
-	return g.Wait()
+	go func() {
+		for scanner := bufio.NewScanner(&outb); scanner.Scan(); {
+			work <- scanner.Text()
+		}
+
+		close(work)
+		workers.Wait()
+		if ctx.Err() == nil {
+			cancel()
+		}
+	}()
+
+	<-ctx.Done()
+	return err
 }
 
 func yamlConfigPath(projectPath string) (string, bool) {
