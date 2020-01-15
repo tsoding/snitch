@@ -95,7 +95,7 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 }
 
 func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
-	todosToRemove := []Todo{}
+	todosToAsk := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
@@ -108,25 +108,30 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 		}
 
 		if status == "closed" {
-			fmt.Printf("[CLOSED] %v\n", todo.LogString())
-			fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
-				creds.getHost(), repo, (*todo.ID)[1:])
-
-			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
-
-			if yes {
-				todosToRemove = append(todosToRemove, todo)
-			}
-
-			if err != nil {
-				return err
-			}
+			todosToAsk = append(todosToAsk, todo)
 		} else {
 			fmt.Printf("[OPEN] %v\n", todo.LogString())
 		}
 
-		return err
+		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	todosToRemove := []Todo{}
+	for _, todo := range todosToAsk {
+		fmt.Printf("[CLOSED] %v\n", todo.LogString())
+		fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
+			creds.getHost(), repo, (*todo.ID)[1:])
+
+		yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
+		if err != nil {
+			return err
+		} else if yes {
+			todosToRemove = append(todosToRemove, todo)
+		}
+	}
 
 	sort.Slice(todosToRemove, func(i, j int) bool {
 		if todosToRemove[i].Filename == todosToRemove[j].Filename {
