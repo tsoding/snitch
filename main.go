@@ -42,30 +42,32 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 }
 
 func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string) error {
-	todosToReport := []Todo{}
+	todosToAsk := []Todo{}
 
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
-			fmt.Printf("%v\n", todo.LogString())
-			fmt.Printf("Issue Title: %s\n", todo.Title)
-			for _, bodyLine := range todo.Body {
-				fmt.Printf("  %s\n", bodyLine)
-			}
-
-			yes, err := yOrN("Do you want to report this? ")
-
-			if yes {
-				todosToReport = append(todosToReport, todo)
-			}
-
-			return err
+			todosToAsk = append(todosToAsk, todo)
 		}
-
 		return nil
 	})
-
 	if err != nil {
 		return err
+	}
+
+	todosToReport := []Todo{}
+	for _, todo := range todosToAsk {
+		fmt.Printf("%v\n", todo.LogString())
+		fmt.Printf("Issue Title: %s\n", todo.Title)
+		for _, bodyLine := range todo.Body {
+			fmt.Printf("  %s\n", bodyLine)
+		}
+
+		yes, err := yOrN("Do you want to report this? ")
+		if err != nil {
+			return err
+		} else if yes {
+			todosToReport = append(todosToReport, todo)
+		}
 	}
 
 	for _, todo := range todosToReport {
