@@ -221,7 +221,7 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 					continue
 				}
 
-				if workerErr = project.WalkTodosOfFile(filepath, visit); err != nil {
+				if workerErr = project.WalkTodosOfFile(filepath, visit); workerErr != nil {
 					err = workerErr
 					cancel()
 				}
