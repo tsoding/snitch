@@ -200,6 +200,7 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 		go func() {
 			defer workers.Done()
 
+			var workerErr error
 			var stat os.FileInfo
 			for filepath := range work {
 				select {
@@ -208,8 +209,9 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 				default:
 				}
 
-				stat, err = os.Stat(filepath)
-				if err != nil {
+				stat, workerErr = os.Stat(filepath)
+				if workerErr != nil {
+					err = workerErr
 					cancel()
 					return
 				}
@@ -219,7 +221,8 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 					continue
 				}
 
-				if err = project.WalkTodosOfFile(filepath, visit); err != nil {
+				if workerErr = project.WalkTodosOfFile(filepath, visit); err != nil {
+					err = workerErr
 					cancel()
 				}
 			}
