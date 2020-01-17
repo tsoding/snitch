@@ -203,12 +203,6 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 			var workerErr error
 			var stat os.FileInfo
 			for filepath := range work {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-
 				stat, workerErr = os.Stat(filepath)
 				if workerErr != nil {
 					err = workerErr
@@ -230,18 +224,20 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 	}
 
 	go func() {
-		for scanner := bufio.NewScanner(&outb); scanner.Scan(); {
-			work <- scanner.Text()
-		}
+		defer cancel()
+		defer close(work)
 
-		close(work)
-		workers.Wait()
-		if ctx.Err() == nil {
-			cancel()
+		for scanner := bufio.NewScanner(&outb); scanner.Scan(); {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				work <- scanner.Text()
+			}
 		}
 	}()
 
-	<-ctx.Done()
+	workers.Wait()
 	return err
 }
 
