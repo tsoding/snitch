@@ -180,19 +180,28 @@ func (project Project) WalkTodosOfFile(path string, visit func(Todo) error) erro
 	return nil
 }
 
+// TodoResult is used by WalkTodosOfDir and contains a todo and an error.
+// The error may be raised by WalkTodosOfFile() or os.Stat() i.e. when a
+// file doesn't exist.
+type TodoResult struct {
+	todo *Todo
+	err  error
+}
+
 // WalkTodosOfDir visits all of the TODOs in a particular directory
-func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) error) error {
+func (project Project) WalkTodosOfDir(dirpath string) (<-chan TodoResult, context.CancelFunc, error) {
 	cmd := exec.Command("git", "ls-files", dirpath)
 	var outb bytes.Buffer
 	cmd.Stdout = &outb
 
 	err := cmd.Run()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	work := make(chan string)
+	output := make(chan TodoResult)
 	var workers sync.WaitGroup
 
 	for i := 0; i < runtime.NumCPU(); i++ {
@@ -205,9 +214,8 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 			for filepath := range work {
 				stat, workerErr = os.Stat(filepath)
 				if workerErr != nil {
-					err = workerErr
-					cancel()
-					return
+					output <- TodoResult{nil, workerErr}
+					continue
 				}
 				if stat.IsDir() {
 					// FIXME(#145): snitch should go inside of git submodules recursively
@@ -215,9 +223,12 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 					continue
 				}
 
-				if workerErr = project.WalkTodosOfFile(filepath, visit); workerErr != nil {
-					err = workerErr
-					cancel()
+				workerErr = project.WalkTodosOfFile(filepath, func(todo Todo) error {
+					output <- TodoResult{&todo, nil}
+					return nil
+				})
+				if workerErr != nil {
+					output <- TodoResult{nil, workerErr}
 				}
 			}
 		}()
@@ -225,6 +236,8 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 
 	go func() {
 		defer cancel()
+		defer close(output)
+		defer workers.Wait()
 		defer close(work)
 
 		for scanner := bufio.NewScanner(&outb); scanner.Scan(); {
@@ -237,8 +250,7 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(todo Todo) erro
 		}
 	}()
 
-	workers.Wait()
-	return err
+	return output, cancel, nil
 }
 
 func yamlConfigPath(projectPath string) (string, bool) {
