@@ -43,7 +43,9 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 			cancel()
 			return v.err
 		}
-		fmt.Println(v.todo.LogString())
+		if filter(*v.todo) {
+			fmt.Println(v.todo.LogString())
+		}
 	}
 
 	return nil
