@@ -34,39 +34,53 @@ func yOrN(question string) (bool, error) {
 }
 
 func listSubcommand(project Project, filter func(todo Todo) bool) error {
-	return project.WalkTodosOfDir(".", func(todo Todo) error {
-		if filter(todo) {
-			fmt.Printf("%v\n", todo.LogString())
+	results, cancel, err := project.WalkTodosOfDir(".")
+	if err != nil {
+		return err
+	}
+
+	for v := range results {
+		if v.err != nil {
+			cancel()
+			return v.err
 		}
-		return nil
-	})
+		if filter(*v.todo) {
+			fmt.Println(v.todo.LogString())
+		}
+	}
+
+	return nil
 }
 
 func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string) error {
-	todosToReport := []Todo{}
-
-	err := project.WalkTodosOfDir(".", func(todo Todo) error {
-		if todo.ID == nil {
-			fmt.Printf("%v\n", todo.LogString())
-			fmt.Printf("Issue Title: %s\n", todo.Title)
-			for _, bodyLine := range todo.Body {
-				fmt.Printf("  %s\n", bodyLine)
-			}
-
-			yes, err := yOrN("Do you want to report this? ")
-
-			if yes {
-				todosToReport = append(todosToReport, todo)
-			}
-
-			return err
-		}
-
-		return nil
-	})
-
+	results, cancel, err := project.WalkTodosOfDir(".")
 	if err != nil {
 		return err
+	}
+
+	todosToReport := []*Todo{}
+	for v := range results {
+		if v.err != nil {
+			cancel()
+			return v.err
+		}
+		if v.todo.ID != nil {
+			continue
+		}
+
+		fmt.Printf("%v\n", v.todo.LogString())
+		fmt.Printf("Issue Title: %s\n", v.todo.Title)
+		for _, bodyLine := range v.todo.Body {
+			fmt.Printf("  %s\n", bodyLine)
+		}
+
+		yes, err := yOrN("Do you want to report this? ")
+		if err != nil {
+			cancel()
+			return err
+		} else if yes {
+			todosToReport = append(todosToReport, v.todo)
+		}
 	}
 
 	for _, todo := range todosToReport {
@@ -94,38 +108,40 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 }
 
 func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
-	todosToRemove := []Todo{}
+	results, cancel, err := project.WalkTodosOfDir(".")
+	if err != nil {
+		return err
+	}
 
-	err := project.WalkTodosOfDir(".", func(todo Todo) error {
-		if todo.ID == nil {
-			return nil
+	todosToRemove := []*Todo{}
+	for v := range results {
+		if v.err != nil {
+			cancel()
+			return v.err
 		}
 
-		status, err := todo.RetrieveStatus(creds, repo)
+		status, err := v.todo.RetrieveStatus(creds, repo)
 		if err != nil {
+			cancel()
 			return err
 		}
-
-		if status == "closed" {
-			fmt.Printf("[CLOSED] %v\n", todo.LogString())
-			fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
-				creds.getHost(), repo, (*todo.ID)[1:])
-
-			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
-
-			if yes {
-				todosToRemove = append(todosToRemove, todo)
-			}
-
-			if err != nil {
-				return err
-			}
-		} else {
-			fmt.Printf("[OPEN] %v\n", todo.LogString())
+		if status != "closed" {
+			fmt.Printf("[OPEN] %v\n", v.todo.LogString())
+			continue
 		}
 
-		return err
-	})
+		fmt.Printf("[CLOSED] %v\n", v.todo.LogString())
+		fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
+			creds.getHost(), repo, (*v.todo.ID)[1:])
+
+		yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
+		if err != nil {
+			cancel()
+			return err
+		} else if yes {
+			todosToRemove = append(todosToRemove, v.todo)
+		}
+	}
 
 	sort.Slice(todosToRemove, func(i, j int) bool {
 		if todosToRemove[i].Filename == todosToRemove[j].Filename {
