@@ -10,14 +10,15 @@ import (
 
 // Todo contains information about a TODO in the repo
 type Todo struct {
-	Prefix   string
-	Suffix   string
-	Keyword  string
-	ID       *string
-	Filename string
-	Line     int
-	Title    string
-	Body     []string
+	Prefix        string
+	Suffix        string
+	Keyword       string
+	ID            *string
+	Filename      string
+	Line          int
+	Title         string
+	Body          []string
+	BodySeparator string
 }
 
 // LogString formats TODO for compilation logging. Format is
@@ -169,4 +170,10 @@ func (todo Todo) RetrieveStatus(creds IssueAPI, repo string) (string, error) {
 // where the todo is located and commits the changes to the git repo.
 func (todo Todo) Report(creds IssueAPI, repo string, body string) (Todo, error) {
 	return creds.postIssue(repo, todo, body)
+}
+
+// IsBodySeperator checks wether the given line contains the
+// body seperator
+func (todo Todo) IsBodySeperator(line string) bool {
+	return len(todo.BodySeparator) != 0 && strings.HasSuffix(line, todo.BodySeparator)
 }
