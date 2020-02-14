@@ -46,7 +46,7 @@ func (titleConfig *TitleConfig) Transform(title string) string {
 // Project contains the project level configuration
 type Project struct {
 	Title    *TitleConfig
-	Keywords []string
+	Keywords []string `yaml:"omitempty"`
 }
 
 func unreportedTodoRegexp(keyword string) string {
