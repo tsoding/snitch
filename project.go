@@ -204,6 +204,19 @@ func (project Project) WalkTodosOfDir(dirpath string) (<-chan TodoResult, contex
 	output := make(chan TodoResult)
 	var workers sync.WaitGroup
 
+	print := make(chan string)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				close(print)
+				return
+			case v := <-print:
+				defer fmt.Println(v)
+			}
+		}
+	}()
+
 	for i := 0; i < runtime.NumCPU(); i++ {
 		workers.Add(1)
 		go func() {
@@ -219,7 +232,7 @@ func (project Project) WalkTodosOfDir(dirpath string) (<-chan TodoResult, contex
 				}
 				if stat.IsDir() {
 					// FIXME(#145): snitch should go inside of git submodules recursively
-					fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
+					print <- fmt.Sprintf("[WARN] `%s` is probably a submodule. Skipping it for now...", filepath)
 					continue
 				}
 
