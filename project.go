@@ -43,10 +43,13 @@ func (titleConfig *TitleConfig) Transform(title string) string {
 	return title
 }
 
+const defaultBodySeparator = "---"
+
 // Project contains the project level configuration
 type Project struct {
-	Title    *TitleConfig
-	Keywords []string `yaml:"omitempty"`
+	Title         *TitleConfig
+	Keywords      []string `yaml:"omitempty"`
+	BodySeparator string
 }
 
 func unreportedTodoRegexp(keyword string) string {
@@ -69,13 +72,14 @@ func (project Project) lineAsUnreportedTodo(line string) *Todo {
 			title := project.Title.Transform(suffix)
 
 			return &Todo{
-				Prefix:   prefix,
-				Suffix:   suffix,
-				Keyword:  keyword,
-				ID:       nil,
-				Filename: "",
-				Line:     0,
-				Title:    title,
+				Prefix:        prefix,
+				Suffix:        suffix,
+				Keyword:       keyword,
+				ID:            nil,
+				Filename:      "",
+				Line:          0,
+				Title:         title,
+				BodySeparator: project.BodySeparator,
 			}
 		}
 	}
@@ -95,13 +99,14 @@ func (project Project) lineAsReportedTodo(line string) *Todo {
 			title := project.Title.Transform(suffix)
 
 			return &Todo{
-				Prefix:   prefix,
-				Suffix:   suffix,
-				Keyword:  keyword,
-				ID:       &id,
-				Filename: "",
-				Line:     0,
-				Title:    title,
+				Prefix:        prefix,
+				Suffix:        suffix,
+				Keyword:       keyword,
+				ID:            &id,
+				Filename:      "",
+				Line:          0,
+				Title:         title,
+				BodySeparator: project.BodySeparator,
 			}
 		}
 	}
@@ -152,6 +157,11 @@ func (project Project) WalkTodosOfFile(path string, visit func(Todo) error) erro
 				todo = possibleTodo // Remain in CollectingBody but for the next todo
 				todo.Filename = path
 				todo.Line = line
+			} else if todo.IsBodySeperator(string(text)) {
+				if err := visit(*todo); err != nil {
+					return err
+				}
+				todo = nil // Switch to LookingForTodo
 			} else if bodyLine := todo.ParseBodyLine(string(text)); bodyLine != nil {
 				todo.Body = append(todo.Body, *bodyLine)
 			} else {
@@ -271,7 +281,8 @@ func NewProject(filePath string) (*Project, error) {
 		Title: &TitleConfig{
 			Transforms: []*TransformRule{},
 		},
-		Keywords: []string{},
+		Keywords:      []string{},
+		BodySeparator: defaultBodySeparator,
 	}
 
 	if configPath, ok := yamlConfigPath(filePath); ok {
