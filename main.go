@@ -14,8 +14,12 @@ import (
 )
 
 func yOrN(question string) (bool, error) {
+	if (os.Getenv("SNITCH_ALWAYS_YES") != "") {
+		return true, nil
+	} 
+	
 	reader := bufio.NewReader(os.Stdin)
-
+	
 	fmt.Printf("%s [y/n] ", question)
 	input, err := reader.ReadString('\n')
 	text := strings.TrimSpace(input)
