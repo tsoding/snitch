@@ -181,7 +181,7 @@ func locateDotGit(dir string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	for absDir != rooted {
 		dotGit := path.Join(absDir, ".git")
 
