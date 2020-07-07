@@ -177,17 +177,18 @@ func usage() {
 
 func locateDotGit(dir string) (string, error) {
 	absDir, err := filepath.Abs(dir)
+	rooted := ""
 	if err != nil {
 		return "", err
 	}
 
-	for absDir != "/" {
+	for absDir != rooted {
 		dotGit := path.Join(absDir, ".git")
 
 		if stat, err := os.Stat(dotGit); !os.IsNotExist(err) && stat.IsDir() {
 			return dotGit, nil
 		}
-
+		rooted = absDir
 		absDir = filepath.Dir(absDir)
 	}
 
