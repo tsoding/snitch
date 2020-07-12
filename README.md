@@ -1,5 +1,6 @@
 [![Tsoding](https://img.shields.io/badge/twitch.tv-tsoding-purple?logo=twitch&style=for-the-badge)](https://www.twitch.tv/tsoding)
 [![Build Status](https://travis-ci.org/tsoding/snitch.svg?branch=master)](https://travis-ci.org/tsoding/snitch)
+[![Build Status](https://github.com/tsoding/snitch/workflows/CI/badge.svg)](https://github.com/tsoding/snitch/actions)
 # Snitch
 
 A simple tool that collects TODOs in the source code and reports them as GitHub issues.
