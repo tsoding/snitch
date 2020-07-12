@@ -122,7 +122,7 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 		if v.todo.ID == nil {
 			continue
 		}
-		
+
 		status, err := v.todo.RetrieveStatus(creds, repo)
 		if err != nil {
 			cancel()
