@@ -1,5 +1,4 @@
 [![Tsoding](https://img.shields.io/badge/twitch.tv-tsoding-purple?logo=twitch&style=for-the-badge)](https://www.twitch.tv/tsoding)
-[![Build Status](https://travis-ci.org/tsoding/snitch.svg?branch=master)](https://travis-ci.org/tsoding/snitch)
 [![Build Status](https://github.com/tsoding/snitch/workflows/Go/badge.svg)](https://github.com/tsoding/snitch/actions?query=workflow%3AGo)
 
 # Snitch
