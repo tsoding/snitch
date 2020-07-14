@@ -2,8 +2,9 @@ package main
 
 import (
 	"bufio"
+	"errors"
+	"flag"
 	"fmt"
-	"gopkg.in/go-ini/ini.v1"
 	"os"
 	"os/user"
 	"path"
@@ -11,6 +12,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"gopkg.in/go-ini/ini.v1"
 )
 
 func yOrN(question string) (bool, error) {
@@ -170,14 +173,6 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 	return err
 }
 
-func usage() {
-	// FIXME(#9): implement a map for options instead of println'ing them all there
-	fmt.Printf("snitch [opt]\n" +
-		"\tlist [--unreported] [--reported]: lists all todos of a dir recursively\n" +
-		"\treport [--prepend-body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
-		"\tpurge: removes all of the reported TODOs that refer to closed issues\n")
-}
-
 func locateDotGit(dir string) (string, error) {
 	absDir, err := filepath.Abs(dir)
 	rooted := ""
@@ -291,51 +286,6 @@ func getRepo(directory string) (string, IssueAPI, error) {
 	return "", nil, fmt.Errorf("%s does not match any of the hosts", urlString)
 }
 
-func parseParams(args []string) (map[string]string, error) {
-	currentParam := ""
-	result := map[string]string{}
-
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "--") { // Flag
-			if len(currentParam) != 0 {
-				result[currentParam] = ""
-			}
-			currentParam = arg[2:]
-		} else { // Value
-			if len(currentParam) == 0 {
-				return nil, fmt.Errorf("Value %v is not associated with any flag", arg)
-			}
-
-			result[currentParam] = arg
-			currentParam = ""
-		}
-	}
-
-	if len(currentParam) != 0 {
-		result[currentParam] = ""
-	}
-
-	return result, nil
-}
-
-func checkParams(params map[string]string, allowedParams []string) error {
-	for param := range params {
-		allowed := false
-		for _, allowedParam := range allowedParams {
-			if param == allowedParam {
-				allowed = true
-				break
-			}
-		}
-
-		if !allowed {
-			return fmt.Errorf("Unknown flag `%s'", param)
-		}
-	}
-
-	return nil
-}
-
 func locateProject(directory string) (string, error) {
 	dotGit, err := locateDotGit(directory)
 	if err != nil {
@@ -370,69 +320,47 @@ func main() {
 	project, err := NewProject(projectPath)
 	exitOnError(err)
 
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "list":
-			params, err := parseParams(os.Args[2:])
-			exitOnError(err)
+	var (
+		listCmd           = flag.NewFlagSet("list", flag.ExitOnError)
+		listCmdReported   = listCmd.Bool("reported", false, "list reported todos")
+		listCmdUnreported = listCmd.Bool("unreported", false, "list unreported todos")
+	)
+	addSubCommand(listCmd, "lists all todos of a dir recursively", func() error {
+		return listSubcommand(*project, func(todo Todo) bool {
+			return *listCmdReported == *listCmdUnreported ||
+				(*listCmdReported && todo.ID != nil) ||
+				(*listCmdUnreported && todo.ID == nil)
+		})
+	})
 
-			err = checkParams(params, []string{"unreported", "reported"})
-			exitOnError(err)
-			_, unreported := params["unreported"]
-			_, reported := params["reported"]
-
-			err = listSubcommand(*project, func(todo Todo) bool {
-				filter := reported == unreported
-
-				if unreported {
-					filter = filter || todo.ID == nil
-				}
-
-				if reported {
-					filter = filter || todo.ID != nil
-				}
-
-				return filter
-			})
-			exitOnError(err)
-		case "report":
-			params, err := parseParams(os.Args[2:])
-			exitOnError(err)
-
-			err = checkParams(params, []string{"prepend-body"})
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				usage()
-				os.Exit(1)
-			}
-
-			prependBody, ok := params["prepend-body"]
-			if !ok {
-				prependBody = ""
-			}
-
-			repo, creds, err := getRepo(".")
-			exitOnError(err)
-
-			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
-
-			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-		case "purge":
-			repo, creds, err := getRepo(".")
-			exitOnError(err)
-
-			if err = purgeSubcommand(*project, creds, repo); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-		default:
-			fmt.Fprintf(os.Stderr, "`%s` unknown command\n", os.Args[1])
-			os.Exit(1)
+	var (
+		reportCmd            = flag.NewFlagSet("report", flag.ExitOnError)
+		reportCmdPrependBody = reportCmd.String("prepend-body", "", "prepend the `issue-body`")
+	)
+	addSubCommand(reportCmd, "reports all todos of a dir recursively as GitHub issues", func() error {
+		repo, creds, err := getRepo(".")
+		if err != nil {
+			return err
 		}
-	} else {
-		usage()
+
+		fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
+		return reportSubcommand(*project, creds, repo, *reportCmdPrependBody)
+	})
+
+	var (
+		purgeCmd = flag.NewFlagSet("purge", flag.ExitOnError)
+	)
+	addSubCommand(purgeCmd, "removes all of the reported TODOs that refer to closed issues", func() error {
+		repo, creds, err := getRepo(".")
+		if err != nil {
+			return err
+		}
+
+		return purgeSubcommand(*project, creds, repo)
+	})
+
+	if err = run(os.Args); err != nil && !errors.Is(err, errNoCommandSpecified) {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
