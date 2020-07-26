@@ -326,10 +326,11 @@ func main() {
 		listCmdUnreported = listCmd.Bool("unreported", false, "list unreported todos")
 	)
 	addSubCommand(listCmd, "lists all todos of a dir recursively", func() error {
+		r, u := *listCmdReported, *listCmdUnreported
+
 		return listSubcommand(*project, func(todo Todo) bool {
-			return *listCmdReported == *listCmdUnreported ||
-				(*listCmdReported && todo.ID != nil) ||
-				(*listCmdUnreported && todo.ID == nil)
+			ok := todo.ID != nil
+			return r == u || (r && ok) || (u && !ok)
 		})
 	})
 
