@@ -20,6 +20,9 @@ type GithubCredentials struct {
 func (creds GithubCredentials) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest(method, url, bodyBuffer)
 	if err != nil {
