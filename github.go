@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gopkg.in/go-ini/ini.v1"
 	"net/http"
@@ -125,5 +126,5 @@ func getGithubCredentials() (GithubCredentials, error) {
 		return GithubCredentialsFromFile(filePath)
 	}
 
-	return GithubCredentials{}, fmt.Errorf("GitHub token is missing")
+	return GithubCredentials{}, errors.New("GitHub token is missing")
 }

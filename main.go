@@ -190,7 +190,7 @@ func locateDotGit(dir string) (string, error) {
 		absDir = filepath.Dir(absDir)
 	}
 
-	return "", fmt.Errorf("Couldn't find .git. Maybe you are not inside of a git repo")
+	return "", errors.New("Couldn't find .git. Maybe you are not inside of a git repo")
 }
 
 func getURLAliases() (map[string]string, error) {
@@ -232,7 +232,7 @@ func getURLAliases() (map[string]string, error) {
 func getRepo(directory string) (string, IssueAPI, error) {
 	credentials := getCredentials()
 	if len(credentials) == 0 {
-		return "", nil, fmt.Errorf("No credentials have been found. Read https://github.com/tsoding/snitch#credentials")
+		return "", nil, errors.New("No credentials have been found. Read https://github.com/tsoding/snitch#credentials")
 	}
 
 	dotGit, err := locateDotGit(directory)
@@ -249,13 +249,13 @@ func getRepo(directory string) (string, IssueAPI, error) {
 
 	origin := cfg.Section("remote \"origin\"")
 	if origin == nil {
-		return "", nil, fmt.Errorf("The git repo doesn't have any origin remote. " +
+		return "", nil, errors.New("The git repo doesn't have any origin remote. " +
 			"Please use `git remote add' command to add one.")
 	}
 
 	url := origin.Key("url")
 	if url == nil {
-		return "", nil, fmt.Errorf("The origin remote doesn't have any URL's " +
+		return "", nil, errors.New("The origin remote doesn't have any URL's " +
 			"associated with it.")
 	}
 
