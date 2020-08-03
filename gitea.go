@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -13,19 +15,23 @@ import (
 	"gopkg.in/go-ini/ini.v1"
 )
 
-// GiteaCredentials contains PersonalToken for GitLab API authorization
+// GiteaCredentials contains PersonalToken for gitea API authorization
 // and Host for possibly implementing support for self-hosted instances
 type GiteaCredentials struct {
 	Host          string
 	PersonalToken string
 }
 
-func (creds GiteaCredentials) query(method, url string) (map[string]interface{}, error) {
-	req, err := http.NewRequest(method, url, nil)
+func (creds GiteaCredentials) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
+	bodyBuffer := new(bytes.Buffer)
+	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
+
+	req, err := http.NewRequest(method, url, bodyBuffer)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("TOKEN", creds.PersonalToken)
+	req.Header.Add("Authorization", "token "+creds.PersonalToken)
+	req.Header.Add("Content-Type", "application/json")
 
 	return QueryHTTP(req)
 }
@@ -33,7 +39,8 @@ func (creds GiteaCredentials) query(method, url string) (map[string]interface{},
 func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 	json, err := creds.query(
 		"GET",
-		"http://"+creds.Host+"/api/v1/repos/"+url.QueryEscape(repo)+"/issues/"+(*todo.ID)[1:]) // self-hosted
+		"http://"+creds.Host+"/api/v1/repos/"+url.QueryEscape(repo)+"/issues/"+(*todo.ID)[1:],
+		nil) // self-hosted
 
 	if err != nil {
 		return nil, err
@@ -43,18 +50,18 @@ func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]inter
 }
 
 func (creds GiteaCredentials) postIssue(repo string, todo Todo, body string) (Todo, error) {
-	params := url.Values{}
-	params.Add("title", todo.Title)
-	params.Add("description", body)
-
 	json, err := creds.query(
 		"POST",
-		"https://"+creds.Host+"/api/v1/repos/"+url.QueryEscape(repo)+"/issues?"+params.Encode()) // self-hosted
+		"http://"+creds.Host+"/api/v1/repos/"+repo+"/issues",
+		map[string]interface{}{
+			"title": todo.Title,
+			"body":  body,
+		}) // self-hosted
 	if err != nil {
 		return todo, err
 	}
 
-	id := "#" + strconv.Itoa(int(json["iid"].(float64)))
+	id := "#" + strconv.Itoa(int(json["id"].(float64)))
 	todo.ID = &id
 
 	return todo, err
@@ -76,7 +83,7 @@ func GiteaCredentialsFromFile(filepath string) []GiteaCredentials {
 	for _, section := range cfg.Sections()[1:] {
 		credentials = append(credentials, GiteaCredentials{
 			Host:          section.Name(),
-			PersonalToken: section.Key("personal_token").String(),
+			PersonalToken: section.Key("access_token").String(),
 		})
 	}
 
@@ -90,7 +97,7 @@ func GiteaCredentialsFromToken(token string) (GiteaCredentials, error) {
 	switch len(credentials) {
 	case 1:
 		return GiteaCredentials{
-			Host:          "gitlab.com",
+			Host:          "gitea.com",
 			PersonalToken: credentials[0],
 		}, nil
 	case 2:
@@ -100,13 +107,13 @@ func GiteaCredentialsFromToken(token string) (GiteaCredentials, error) {
 		}, nil
 	default:
 		return GiteaCredentials{},
-			fmt.Errorf("Couldn't parse GitLab credentials from ENV: %s", token)
+			fmt.Errorf("Couldn't parse gitea credentials from ENV: %s", token)
 	}
 
 }
 
 func getGiteaCredentials(creds []IssueAPI) []IssueAPI {
-	tokenEnvar := os.Getenv("GITLAB_PERSONAL_TOKEN")
+	tokenEnvar := os.Getenv("GITEA_ACCESS_TOKEN")
 	xdgEnvar := os.Getenv("XDG_CONFIG_HOME")
 	usr, err := user.Current()
 
@@ -128,7 +135,7 @@ func getGiteaCredentials(creds []IssueAPI) []IssueAPI {
 
 	// custom XDG_CONFIG_HOME
 	if len(xdgEnvar) != 0 {
-		filePath := path.Join(xdgEnvar, "snitch/gitlab.ini")
+		filePath := path.Join(xdgEnvar, "snitch/gitea.ini")
 		if _, err := os.Stat(filePath); err == nil {
 			for _, cred := range GiteaCredentialsFromFile(filePath) {
 				creds = append(creds, cred)
@@ -138,7 +145,7 @@ func getGiteaCredentials(creds []IssueAPI) []IssueAPI {
 
 	// default XDG_CONFIG_HOME
 	if len(xdgEnvar) == 0 {
-		filePath := path.Join(usr.HomeDir, ".config/snitch/gitlab.ini")
+		filePath := path.Join(usr.HomeDir, ".config/snitch/gitea.ini")
 		if _, err := os.Stat(filePath); err == nil {
 			for _, cred := range GiteaCredentialsFromFile(filePath) {
 				creds = append(creds, cred)
@@ -146,7 +153,7 @@ func getGiteaCredentials(creds []IssueAPI) []IssueAPI {
 		}
 	}
 
-	filePath := path.Join(usr.HomeDir, ".snitch/gitlab.ini")
+	filePath := path.Join(usr.HomeDir, ".snitch/gitea.ini")
 	if _, err := os.Stat(filePath); err == nil {
 		for _, cred := range GiteaCredentialsFromFile(filePath) {
 			creds = append(creds, cred)

@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"gopkg.in/go-ini/ini.v1"
 	"os"
 	"os/user"
 	"path"
@@ -11,6 +10,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"gopkg.in/go-ini/ini.v1"
 )
 
 func yOrN(question string) (bool, error) {
@@ -359,7 +360,7 @@ func getCredentials() []IssueAPI {
 		creds = append(creds, github)
 	}
 	creds = getGitlabCredentials(creds)
-
+	creds = getGiteaCredentials(creds)
 	return creds
 }
 
