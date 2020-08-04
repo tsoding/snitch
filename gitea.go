@@ -94,15 +94,15 @@ func GiteaCredentialsFromToken(token string) (GiteaCredentials, error) {
 	credentials := strings.Split(token, ":")
 
 	switch len(credentials) {
-	case 1:
-		return GiteaCredentials{
-			Host:          "gitea.com",
-			PersonalToken: credentials[0],
-		}, nil
 	case 2:
 		return GiteaCredentials{
 			Host:          credentials[0],
 			PersonalToken: credentials[1],
+		}, nil
+	case 3:
+		return GiteaCredentials{
+			Host:          credentials[0] + ":" + credentials[1],
+			PersonalToken: credentials[2],
 		}, nil
 	default:
 		return GiteaCredentials{},
