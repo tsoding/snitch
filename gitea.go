@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"os"
 	"os/user"
 	"path"
@@ -39,7 +38,7 @@ func (creds GiteaCredentials) query(method, url string, jsonBody map[string]inte
 func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 	json, err := creds.query(
 		"GET",
-		"http://"+creds.Host+"/api/v1/repos/"+url.QueryEscape(repo)+"/issues/"+(*todo.ID)[1:],
+		"http://"+creds.Host+"/api/v1/repos/"+repo+"/issues/"+(*todo.ID)[1:],
 		nil) // self-hosted
 
 	if err != nil {
