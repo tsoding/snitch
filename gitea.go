@@ -38,7 +38,7 @@ func (creds GiteaCredentials) query(method, url string, jsonBody map[string]inte
 func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 	json, err := creds.query(
 		"GET",
-		"http://"+creds.Host+"/api/v1/repos/"+repo+"/issues/"+(*todo.ID)[1:],
+		"https://"+creds.Host+"/api/v1/repos/"+repo+"/issues/"+(*todo.ID)[1:],
 		nil) // self-hosted
 
 	if err != nil {
@@ -51,7 +51,7 @@ func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]inter
 func (creds GiteaCredentials) postIssue(repo string, todo Todo, body string) (Todo, error) {
 	json, err := creds.query(
 		"POST",
-		"http://"+creds.Host+"/api/v1/repos/"+repo+"/issues",
+		"https://"+creds.Host+"/api/v1/repos/"+repo+"/issues",
 		map[string]interface{}{
 			"title": todo.Title,
 			"body":  body,
