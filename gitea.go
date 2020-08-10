@@ -36,6 +36,7 @@ func (creds GiteaCredentials) query(method, url string, jsonBody map[string]inte
 }
 
 func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
+	// FIXME(#187): gitea integration does not support http instances.
 	json, err := creds.query(
 		"GET",
 		"https://"+creds.Host+"/api/v1/repos/"+repo+"/issues/"+(*todo.ID)[1:],
