@@ -14,24 +14,31 @@ import (
 	"gopkg.in/go-ini/ini.v1"
 )
 
-func yOrN(question string) (bool, error) {
-	reader := bufio.NewReader(os.Stdin)
+func yOrN(question string, verbosity string) (bool, error) {
 
-	fmt.Printf("%s [y/n] ", question)
-	input, err := reader.ReadString('\n')
-	text := strings.TrimSpace(input)
+	if verbosity == "off" {
+		reader := bufio.NewReader(os.Stdin)
 
-	for err == nil && text != "y" && text != "n" {
 		fmt.Printf("%s [y/n] ", question)
-		text, err = reader.ReadString('\n')
-		text = strings.TrimSpace(text)
-	}
+		input, err := reader.ReadString('\n')
+		text := strings.TrimSpace(input)
 
-	if err != nil || text == "n" {
-		return false, err
-	}
+		for err == nil && text != "y" && text != "n" {
+			fmt.Printf("%s [y/n] ", question)
+			text, err = reader.ReadString('\n')
+			text = strings.TrimSpace(text)
+		}
 
-	return true, err
+		if err != nil || text == "n" {
+			return false, err
+		}
+
+		return true, err
+	} else if verbosity == "on" {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }
 
 func listSubcommand(project Project, filter func(todo Todo) bool) error {
@@ -53,7 +60,7 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	return nil
 }
 
-func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string) error {
+func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string, verbosity string) error {
 	results, cancel, err := project.WalkTodosOfDir(".")
 	if err != nil {
 		return err
@@ -75,7 +82,7 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 			fmt.Printf("  %s\n", bodyLine)
 		}
 
-		yes, err := yOrN("Do you want to report this? ")
+		yes, err := yOrN("Do you want to report this? ", verbosity)
 		if err != nil {
 			cancel()
 			return err
@@ -108,7 +115,7 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 	return err
 }
 
-func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
+func purgeSubcommand(project Project, creds IssueAPI, repo string, verbosity string) error {
 	results, cancel, err := project.WalkTodosOfDir(".")
 	if err != nil {
 		return err
@@ -138,7 +145,7 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 		fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
 			creds.getHost(), repo, (*v.todo.ID)[1:])
 
-		yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
+		yes, err := yOrN("This issue is closed. Do you want to remove the TODO?", verbosity)
 		if err != nil {
 			cancel()
 			return err
@@ -170,12 +177,12 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 
 	return err
 }
-
+// FIXME(#1): testing --y flag
 func usage() {
 	// FIXME(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
-		"\tlist [--unreported] [--reported]: lists all todos of a dir recursively\n" +
-		"\treport [--prepend-body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
+		"\tlist [--unreported] [--reported] [--y]: lists all todos of a dir recursively\n" +
+		"\treport [--prepend-body <issue-body>] [--y]: reports all todos of a dir recursively \n\t\tas GitHub issues\n" +
 		"\tpurge: removes all of the reported TODOs that refer to closed issues\n")
 }
 
@@ -400,7 +407,7 @@ func main() {
 			params, err := parseParams(os.Args[2:])
 			exitOnError(err)
 
-			err = checkParams(params, []string{"prepend-body"})
+			err = checkParams(params, []string{"prepend-body", "y"})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				usage()
@@ -412,12 +419,19 @@ func main() {
 				prependBody = ""
 			}
 
+			verbosity, ok := params["y"]
+			if !ok {
+				verbosity = "off"
+			} else {
+				verbosity = "on"
+			}
+
 			repo, creds, err := getRepo(".")
 			exitOnError(err)
 
 			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
 
-			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
+			if err = reportSubcommand(*project, creds, repo, prependBody, verbosity); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
@@ -425,7 +439,24 @@ func main() {
 			repo, creds, err := getRepo(".")
 			exitOnError(err)
 
-			if err = purgeSubcommand(*project, creds, repo); err != nil {
+			params, err := parseParams(os.Args[2:])
+			exitOnError(err)
+
+			err = checkParams(params, []string{"y"})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				usage()
+				os.Exit(1)
+			}
+
+			verbosity, ok := params["y"]
+			if !ok {
+				verbosity = "off"
+			} else {
+				verbosity = "on"
+			}
+
+			if err = purgeSubcommand(*project, creds, repo, verbosity); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
