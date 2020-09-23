@@ -16,7 +16,7 @@ import (
 
 func yOrN(question string, verbosity string) (bool, error) {
 
-	if verbosity == "off" {
+	if verbosity == "non-interactive" {
 		reader := bufio.NewReader(os.Stdin)
 
 		fmt.Printf("%s [y/n] ", question)
@@ -34,7 +34,7 @@ func yOrN(question string, verbosity string) (bool, error) {
 		}
 
 		return true, err
-	} else if verbosity == "on" {
+	} else if verbosity == "interactive" {
 		return true, nil
 	} else {
 		return false, nil
@@ -177,7 +177,7 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string, verbosity str
 
 	return err
 }
-// FIXME(#1): testing --y flag
+
 func usage() {
 	// FIXME(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
@@ -421,9 +421,9 @@ func main() {
 
 			verbosity, ok := params["y"]
 			if !ok {
-				verbosity = "off"
+				verbosity = "non-interactive"
 			} else {
-				verbosity = "on"
+				verbosity = "interactive"
 			}
 
 			repo, creds, err := getRepo(".")
@@ -451,9 +451,9 @@ func main() {
 
 			verbosity, ok := params["y"]
 			if !ok {
-				verbosity = "off"
+				verbosity = "non-interactive"
 			} else {
-				verbosity = "on"
+				verbosity = "interactive"
 			}
 
 			if err = purgeSubcommand(*project, creds, repo, verbosity); err != nil {
