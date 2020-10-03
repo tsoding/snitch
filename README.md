@@ -153,8 +153,8 @@ keywords:
 ### Issue Title Transformation
 
 You can apply project local issue title transformations. Create
-`.snitch.yaml` file in the root of the project with the following
-content:
+`.snitch.yaml` file in the root of the project or in
+`$HOME/.config/snitch/snitch.yaml` with the following content:
 
 ```yaml
 title:
