@@ -304,11 +304,16 @@ func parseParams(args []string) (map[string]string, error) {
 	result := map[string]string{}
 
 	for _, arg := range args {
-		if strings.HasPrefix(arg, "--") { // Flag
+		if strings.HasPrefix(arg, "--") {       // Long Flag
 			if len(currentParam) != 0 {
 				result[currentParam] = ""
 			}
 			currentParam = arg[2:]
+		} else if strings.HasPrefix(arg, "-") { // Short Flags
+			if len(currentParam) != 0 {
+				result[currentParam] = ""
+			}
+			currentParam = arg[1:]
 		} else { // Value
 			if len(currentParam) == 0 {
 				return nil, fmt.Errorf("Value %v is not associated with any flag", arg)
