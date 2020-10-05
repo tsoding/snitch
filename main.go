@@ -53,7 +53,7 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	return nil
 }
 
-func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string, verbosity string) error {
+func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string, alwaysYes bool) error {
 	results, cancel, err := project.WalkTodosOfDir(".")
 	if err != nil {
 		return err
@@ -76,10 +76,10 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 		}
 
 		yes := false
-		if verbosity == "interactive" {
-			yes, err = yOrN("Do you want to report this? ")
-		} else if verbosity == "non-interactive" {
+		if alwaysYes {
 			yes = true
+		} else {
+			yes, err = yOrN("Do you want to report this? ")
 		}
 
 		if err != nil {
@@ -114,7 +114,7 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 	return err
 }
 
-func purgeSubcommand(project Project, creds IssueAPI, repo string, verbosity string) error {
+func purgeSubcommand(project Project, creds IssueAPI, repo string, alwaysYes bool) error {
 	results, cancel, err := project.WalkTodosOfDir(".")
 	if err != nil {
 		return err
@@ -145,11 +145,12 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string, verbosity str
 			creds.getHost(), repo, (*v.todo.ID)[1:])
 
 		yes := false
-		if verbosity == "interactive" {
-			yes, err = yOrN("This issue is closed. Do you want to remove the TODO?")
-		} else if verbosity == "non-interactive" {
+		if alwaysYes {
 			yes = true
+		} else {
+			yes, err = yOrN("This issue is closed. Do you want to remove the TODO?")
 		}
+
 		if err != nil {
 			cancel()
 			return err
@@ -428,19 +429,14 @@ func main() {
 				prependBody = ""
 			}
 
-			verbosity, ok := params["y"]
-			if !ok {
-				verbosity = "interactive"
-			} else {
-				verbosity = "non-interactive"
-			}
+			_, alwaysYes := params["y"]
 
 			repo, creds, err := getRepo(".")
 			exitOnError(err)
 
 			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
 
-			if err = reportSubcommand(*project, creds, repo, prependBody, verbosity); err != nil {
+			if err = reportSubcommand(*project, creds, repo, prependBody, alwaysYes); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
@@ -458,14 +454,9 @@ func main() {
 				os.Exit(1)
 			}
 
-			verbosity, ok := params["y"]
-			if !ok {
-				verbosity = "interactive"
-			} else {
-				verbosity = "non-interactive"
-			}
+			_, alwaysYes := params["y"]
 
-			if err = purgeSubcommand(*project, creds, repo, verbosity); err != nil {
+			if err = purgeSubcommand(*project, creds, repo, alwaysYes); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
