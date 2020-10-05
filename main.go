@@ -14,31 +14,24 @@ import (
 	"gopkg.in/go-ini/ini.v1"
 )
 
-func yOrN(question string, verbosity string) (bool, error) {
+func yOrN(question string) (bool, error) {
+	reader := bufio.NewReader(os.Stdin)
 
-	if verbosity == "non-interactive" {
-		reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("%s [y/n] ", question)
+	input, err := reader.ReadString('\n')
+	text := strings.TrimSpace(input)
 
+	for err == nil && text != "y" && text != "n" {
 		fmt.Printf("%s [y/n] ", question)
-		input, err := reader.ReadString('\n')
-		text := strings.TrimSpace(input)
-
-		for err == nil && text != "y" && text != "n" {
-			fmt.Printf("%s [y/n] ", question)
-			text, err = reader.ReadString('\n')
-			text = strings.TrimSpace(text)
-		}
-
-		if err != nil || text == "n" {
-			return false, err
-		}
-
-		return true, err
-	} else if verbosity == "interactive" {
-		return true, nil
-	} else {
-		return false, nil
+		text, err = reader.ReadString('\n')
+		text = strings.TrimSpace(text)
 	}
+
+	if err != nil || text == "n" {
+		return false, err
+	}
+
+	return true, err
 }
 
 func listSubcommand(project Project, filter func(todo Todo) bool) error {
@@ -82,7 +75,13 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 			fmt.Printf("  %s\n", bodyLine)
 		}
 
-		yes, err := yOrN("Do you want to report this? ", verbosity)
+		yes := false
+		if verbosity == "interactive" {
+			yes, err = yOrN("Do you want to report this? ")
+		} else if verbosity == "non-interactive" {
+			yes = true
+		}
+
 		if err != nil {
 			cancel()
 			return err
@@ -145,7 +144,12 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string, verbosity str
 		fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
 			creds.getHost(), repo, (*v.todo.ID)[1:])
 
-		yes, err := yOrN("This issue is closed. Do you want to remove the TODO?", verbosity)
+		yes := false
+		if verbosity == "interactive" {
+			yes, err = yOrN("This issue is closed. Do you want to remove the TODO?")
+		} else if verbosity == "non-interactive" {
+			yes = true
+		}
 		if err != nil {
 			cancel()
 			return err
@@ -426,9 +430,9 @@ func main() {
 
 			verbosity, ok := params["y"]
 			if !ok {
-				verbosity = "non-interactive"
-			} else {
 				verbosity = "interactive"
+			} else {
+				verbosity = "non-interactive"
 			}
 
 			repo, creds, err := getRepo(".")
@@ -456,9 +460,9 @@ func main() {
 
 			verbosity, ok := params["y"]
 			if !ok {
-				verbosity = "non-interactive"
-			} else {
 				verbosity = "interactive"
+			} else {
+				verbosity = "non-interactive"
 			}
 
 			if err = purgeSubcommand(*project, creds, repo, verbosity); err != nil {
