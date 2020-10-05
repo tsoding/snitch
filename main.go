@@ -53,7 +53,7 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	return nil
 }
 
-func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string) error {
+func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string, alwaysYes bool) error {
 	results, cancel, err := project.WalkTodosOfDir(".")
 	if err != nil {
 		return err
@@ -75,7 +75,13 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 			fmt.Printf("  %s\n", bodyLine)
 		}
 
-		yes, err := yOrN("Do you want to report this? ")
+		yes := false
+		if alwaysYes {
+			yes = true
+		} else {
+			yes, err = yOrN("Do you want to report this? ")
+		}
+
 		if err != nil {
 			cancel()
 			return err
@@ -108,7 +114,7 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 	return err
 }
 
-func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
+func purgeSubcommand(project Project, creds IssueAPI, repo string, alwaysYes bool) error {
 	results, cancel, err := project.WalkTodosOfDir(".")
 	if err != nil {
 		return err
@@ -138,7 +144,13 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 		fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
 			creds.getHost(), repo, (*v.todo.ID)[1:])
 
-		yes, err := yOrN("This issue is closed. Do you want to remove the TODO?")
+		yes := false
+		if alwaysYes {
+			yes = true
+		} else {
+			yes, err = yOrN("This issue is closed. Do you want to remove the TODO?")
+		}
+
 		if err != nil {
 			cancel()
 			return err
@@ -174,8 +186,8 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string) error {
 func usage() {
 	// FIXME(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
-		"\tlist [--unreported] [--reported]: lists all todos of a dir recursively\n" +
-		"\treport [--prepend-body <issue-body>]: reports all todos of a dir recursively as GitHub issues\n" +
+		"\tlist [--unreported] [--reported] [--y]: lists all todos of a dir recursively\n" +
+		"\treport [--prepend-body <issue-body>] [--y]: reports all todos of a dir recursively \n\t\tas GitHub issues\n" +
 		"\tpurge: removes all of the reported TODOs that refer to closed issues\n")
 }
 
@@ -297,11 +309,16 @@ func parseParams(args []string) (map[string]string, error) {
 	result := map[string]string{}
 
 	for _, arg := range args {
-		if strings.HasPrefix(arg, "--") { // Flag
+		if strings.HasPrefix(arg, "--") { // Long Flag
 			if len(currentParam) != 0 {
 				result[currentParam] = ""
 			}
 			currentParam = arg[2:]
+		} else if strings.HasPrefix(arg, "-") { // Short Flags
+			if len(currentParam) != 0 {
+				result[currentParam] = ""
+			}
+			currentParam = arg[1:]
 		} else { // Value
 			if len(currentParam) == 0 {
 				return nil, fmt.Errorf("Value %v is not associated with any flag", arg)
@@ -400,7 +417,7 @@ func main() {
 			params, err := parseParams(os.Args[2:])
 			exitOnError(err)
 
-			err = checkParams(params, []string{"prepend-body"})
+			err = checkParams(params, []string{"prepend-body", "y"})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				usage()
@@ -412,12 +429,14 @@ func main() {
 				prependBody = ""
 			}
 
+			_, alwaysYes := params["y"]
+
 			repo, creds, err := getRepo(".")
 			exitOnError(err)
 
 			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
 
-			if err = reportSubcommand(*project, creds, repo, prependBody); err != nil {
+			if err = reportSubcommand(*project, creds, repo, prependBody, alwaysYes); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
@@ -425,7 +444,19 @@ func main() {
 			repo, creds, err := getRepo(".")
 			exitOnError(err)
 
-			if err = purgeSubcommand(*project, creds, repo); err != nil {
+			params, err := parseParams(os.Args[2:])
+			exitOnError(err)
+
+			err = checkParams(params, []string{"y"})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				usage()
+				os.Exit(1)
+			}
+
+			_, alwaysYes := params["y"]
+
+			if err = purgeSubcommand(*project, creds, repo, alwaysYes); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
