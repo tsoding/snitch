@@ -22,6 +22,10 @@ jobs:
       - uses: actions/setup-go@v2
       - run: diff --line-format=%L <(gofmt -d .) <(echo -n)
       - run: go vet -x ./...
+      - name: golint
+        run: |
+          GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
+          ./bin/golint -set_exit_status ./...
 
   test:
     runs-on: ubuntu-latest
