@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/go-ini/ini.v1"
+	"gopkg.in/ini.v1"
 	"net/http"
 	"os"
 	"os/user"

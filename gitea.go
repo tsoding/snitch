@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/go-ini/ini.v1"
+	"gopkg.in/ini.v1"
 )
 
 // GiteaCredentials contains PersonalToken for gitea API authorization
