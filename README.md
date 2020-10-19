@@ -174,6 +174,18 @@ $ go get .
 $ go build .
 ```
 
+### Run tests
+
+```console
+$ go test ./...
+```
+
+For a more detailed output:
+
+```console
+$ go test -v -cover ./...
+```
+
 ## Support
 
 You can support my work via
