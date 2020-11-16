@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/go-ini/ini.v1"
+	"gopkg.in/ini.v1"
 )
 
 func yOrN(question string) (bool, error) {

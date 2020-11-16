@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/go-ini/ini.v1"
+	"gopkg.in/ini.v1"
 )
 
 // GitlabCredentials contains PersonalToken for GitLab API authorization
