@@ -381,12 +381,18 @@ func getCredentials() []IssueAPI {
 	return creds
 }
 
-func main() {
-	projectPath, err := locateProject(".")
+func getProject(directory string) *Project {
+	projectPath, err := locateProject(directory)
 	exitOnError(err)
 
 	project, err := NewProject(projectPath)
 	exitOnError(err)
+
+	return project
+}
+
+func main() {
+	project := getProject(".")
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
