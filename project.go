@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
 	"os/exec"
@@ -14,6 +12,9 @@ import (
 	"regexp"
 	"runtime"
 	"sync"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 // TransformRule defines a title transformation rule
@@ -50,6 +51,7 @@ type Project struct {
 	Title         *TitleConfig
 	Keywords      []string
 	BodySeparator string
+	Remote        string
 }
 
 func unreportedTodoRegexp(keyword string) string {

@@ -247,6 +247,16 @@ func getURLAliases() (map[string]string, error) {
 	return aliases, nil
 }
 
+func getRemote() (string, bool) {
+	project := getProject(".")
+
+	if len(project.Remote) > 0 {
+		return project.Remote, false
+	}
+
+	return "", true
+}
+
 func getRepo(directory string) (string, IssueAPI, error) {
 	credentials := getCredentials()
 	if len(credentials) == 0 {
@@ -265,7 +275,12 @@ func getRepo(directory string) (string, IssueAPI, error) {
 		return "", nil, err
 	}
 
-	origin := cfg.Section("remote \"origin\"")
+	remote, unspecified := getRemote()
+	if unspecified {
+		remote = "origin"
+	}
+
+	origin := cfg.Section("remote \"" + remote + "\"")
 	if origin == nil {
 		return "", nil, fmt.Errorf("The git repo doesn't have any origin remote. " +
 			"Please use `git remote add' command to add one.")
