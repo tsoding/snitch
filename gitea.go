@@ -61,7 +61,7 @@ func (creds GiteaCredentials) postIssue(repo string, todo Todo, body string) (To
 		return todo, err
 	}
 
-	id := "#" + strconv.Itoa(int(json["id"].(float64)))
+	id := "#" + strconv.Itoa(int(json["number"].(float64)))
 	todo.ID = &id
 
 	return todo, err
