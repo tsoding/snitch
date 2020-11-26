@@ -313,6 +313,10 @@ func getRepo(directory string, remote string) (string, IssueAPI, error) {
 		}
 	}
 
+	if urlString == "" {
+		urlString = fmt.Sprintf("Remote: '%v'", remote)
+	}
+
 	return "", nil, fmt.Errorf("%s does not match any of the hosts", urlString)
 }
 
