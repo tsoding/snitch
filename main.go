@@ -186,9 +186,9 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string, alwaysYes boo
 func usage() {
 	// FIXME(#9): implement a map for options instead of println'ing them all there
 	fmt.Printf("snitch [opt]\n" +
-		"\tlist [--unreported] [--reported] [--y]: lists all todos of a dir recursively\n" +
-		"\treport [--prepend-body <issue-body>] [--y]: reports all todos of a dir recursively \n\t\tas GitHub issues\n" +
-		"\tpurge: removes all of the reported TODOs that refer to closed issues\n")
+		"\tlist [--unreported] [--reported] [--y] [--remote]: lists all todos of a dir recursively\n" +
+		"\treport [--prepend-body <issue-body>] [--y] [--remote]: reports all todos of a dir recursively \n\t\tas GitHub issues\n" +
+		"\tpurge [--remote]: removes all of the reported TODOs that refer to closed issues\n")
 }
 
 func locateDotGit(dir string) (string, error) {
@@ -247,17 +247,19 @@ func getURLAliases() (map[string]string, error) {
 	return aliases, nil
 }
 
-func getRemote() (string, bool) {
+func getRemote(params map[string]string) string {
 	project := getProject(".")
 
-	if len(project.Remote) > 0 {
-		return project.Remote, false
+	if len(params["remote"]) > 0 {
+		return params["remote"]
+	} else if len(project.Remote) > 0 {
+		return project.Remote
 	}
 
-	return "", true
+	return "origin"
 }
 
-func getRepo(directory string) (string, IssueAPI, error) {
+func getRepo(directory string, remote string) (string, IssueAPI, error) {
 	credentials := getCredentials()
 	if len(credentials) == 0 {
 		return "", nil, fmt.Errorf("No credentials have been found. Read https://github.com/tsoding/snitch#credentials")
@@ -273,11 +275,6 @@ func getRepo(directory string) (string, IssueAPI, error) {
 	cfg, err := ini.Load(configPath)
 	if err != nil {
 		return "", nil, err
-	}
-
-	remote, unspecified := getRemote()
-	if unspecified {
-		remote = "origin"
 	}
 
 	origin := cfg.Section("remote \"" + remote + "\"")
@@ -415,7 +412,7 @@ func main() {
 			params, err := parseParams(os.Args[2:])
 			exitOnError(err)
 
-			err = checkParams(params, []string{"unreported", "reported"})
+			err = checkParams(params, []string{"unreported", "reported", "remote"})
 			exitOnError(err)
 			_, unreported := params["unreported"]
 			_, reported := params["reported"]
@@ -438,7 +435,7 @@ func main() {
 			params, err := parseParams(os.Args[2:])
 			exitOnError(err)
 
-			err = checkParams(params, []string{"prepend-body", "y"})
+			err = checkParams(params, []string{"prepend-body", "y", "remote"})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				usage()
@@ -452,7 +449,7 @@ func main() {
 
 			_, alwaysYes := params["y"]
 
-			repo, creds, err := getRepo(".")
+			repo, creds, err := getRepo(".", getRemote(params))
 			exitOnError(err)
 
 			fmt.Printf("Detected project: https://%s/%s\n", creds.getHost(), repo)
@@ -462,18 +459,18 @@ func main() {
 				os.Exit(1)
 			}
 		case "purge":
-			repo, creds, err := getRepo(".")
-			exitOnError(err)
-
 			params, err := parseParams(os.Args[2:])
 			exitOnError(err)
 
-			err = checkParams(params, []string{"y"})
+			err = checkParams(params, []string{"y", "remote"})
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				usage()
 				os.Exit(1)
 			}
+
+			repo, creds, err := getRepo(".", getRemote(params))
+			exitOnError(err)
 
 			_, alwaysYes := params["y"]
 
