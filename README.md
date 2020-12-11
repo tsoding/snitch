@@ -69,6 +69,39 @@ Capture Groups:
 - Snitch parses all of the consecutive lines with the same prefix as the body.
 - The body is reported as the Issue Description.
 
+## Remote specification
+
+By default Snitch will automatically reference the `origin` remote as the defacto standard for most projects. 
+
+However, you can specify which remote Snitch uses on a per repo basis.
+
+### .snitch.yaml
+
+Remotes are defined in `.snitch.yaml` under **remote**.
+
+#### Example 
+<pre>
+title:
+  transforms:
+    - match: (.*) \*/
+      replace: $1
+    - match: (.*) \*\}
+      replace: $1
+keywords:
+  - FIXME
+<b>remote: &ltremote&gt</b>
+</pre>
+
+### Commandline
+Remotes can be dynamically specified when Snitch is called.
+
+This will overide a previously defined remote in `.snitch.yaml`
+
+#### Example
+```
+$ ./snitch report --remote <remote>
+```
+
 ## Installation
 
 ```console
