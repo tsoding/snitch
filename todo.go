@@ -66,6 +66,11 @@ func (todo Todo) updateToFile(outputFilename string, lineCallback func(int, stri
 	}
 	defer inputFile.Close()
 
+	fileInfo, err := os.Stat(todo.Filename)
+	if err != nil {
+		return err
+	}
+
 	outputFile, err := os.Create(outputFilename)
 	if err != nil {
 		return err
@@ -89,6 +94,11 @@ func (todo Todo) updateToFile(outputFilename string, lineCallback func(int, stri
 		}
 
 		lineNumber = lineNumber + 1
+	}
+
+	err = outputFile.Chmod(fileInfo.Mode())
+	if err != nil {
+		return err
 	}
 
 	return err
