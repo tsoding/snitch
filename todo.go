@@ -96,7 +96,7 @@ func (todo Todo) updateToFile(outputFilename string, lineCallback func(int, stri
 		lineNumber = lineNumber + 1
 	}
 
-	err = outputFile.Chmod(fileInfo.Mode())
+	err = os.Chmod(outputFilename, fileInfo.Mode());
 	if err != nil {
 		return err
 	}
