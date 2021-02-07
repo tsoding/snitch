@@ -305,11 +305,11 @@ func getRepo(directory string, remote string) (string, IssueAPI, error) {
 
 	for _, creds := range credentials {
 		hostRegex := regexp.MustCompile(
-			creds.getHost() + "[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
+			creds.getHost() + "[:/]([-\\w/]+)(?:.git)?$")
 		groups := hostRegex.FindStringSubmatch(urlString)
 
 		if groups != nil {
-			return groups[1] + "/" + groups[2], creds, nil
+			return groups[1], creds, nil
 		}
 	}
 
