@@ -259,6 +259,20 @@ func getRemote(params map[string]string) string {
 	return "origin"
 }
 
+func getRepoFromRemoteURL(host, remoteURL string) *string {
+	hostRegex := regexp.MustCompile(host + "(?::[\\d]+){0,1}:?/*(.*)")
+	groups := hostRegex.FindStringSubmatch(remoteURL)
+	if groups == nil {
+		return nil
+	}
+	path := groups[1]
+	path = strings.TrimSuffix(path, "/")
+	if strings.HasSuffix(path, ".git") {
+		path = strings.TrimSuffix(path, ".git")
+	}
+	return &path
+}
+
 func getRepo(directory string, remote string) (string, IssueAPI, error) {
 	credentials := getCredentials()
 	if len(credentials) == 0 {
@@ -304,12 +318,10 @@ func getRepo(directory string, remote string) (string, IssueAPI, error) {
 	}
 
 	for _, creds := range credentials {
-		hostRegex := regexp.MustCompile(
-			creds.getHost() + "[:/]([-\\w]+)\\/([-\\w]+)(.git)?")
-		groups := hostRegex.FindStringSubmatch(urlString)
+		repo := getRepoFromRemoteURL(creds.getHost(), urlString)
 
-		if groups != nil {
-			return groups[1] + "/" + groups[2], creds, nil
+		if repo != nil {
+			return *repo, creds, nil
 		}
 	}
 
