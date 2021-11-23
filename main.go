@@ -44,12 +44,12 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 			fmt.Println(todo.LogString())
 		}
 		return nil
-	});
+	})
 }
 
 func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string, alwaysYes bool) error {
 	todosToReport := []*Todo{}
-	err := project.WalkTodosOfDir(".", func (todo Todo) error {
+	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		fmt.Printf("%v\n", todo.LogString())
 		fmt.Printf("Issue Title: %s\n", todo.Title)
 		for _, bodyLine := range todo.Body {
@@ -95,7 +95,7 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 
 func purgeSubcommand(project Project, creds IssueAPI, repo string, alwaysYes bool) error {
 	todosToRemove := []*Todo{}
-	err := project.WalkTodosOfDir(".", func (todo Todo) error {
+	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if todo.ID == nil {
 			return nil
 		}
