@@ -50,6 +50,10 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string, alwaysYes bool) error {
 	todosToReport := []*Todo{}
 	err := project.WalkTodosOfDir(".", func(todo Todo) error {
+		if todo.ID != nil {
+			return nil
+		}
+
 		fmt.Printf("%v\n", todo.LogString())
 		fmt.Printf("Issue Title: %s\n", todo.Title)
 		for _, bodyLine := range todo.Body {
