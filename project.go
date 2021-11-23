@@ -3,15 +3,12 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path"
 	"regexp"
-	"runtime"
-	"sync"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -192,77 +189,37 @@ func (project Project) WalkTodosOfFile(path string, visit func(Todo) error) erro
 	return nil
 }
 
-// TodoResult is used by WalkTodosOfDir and contains a todo and an error.
-// The error may be raised by WalkTodosOfFile() or os.Stat() i.e. when a
-// file doesn't exist.
-type TodoResult struct {
-	todo *Todo
-	err  error
-}
-
 // WalkTodosOfDir visits all of the TODOs in a particular directory
-func (project Project) WalkTodosOfDir(dirpath string) (<-chan TodoResult, context.CancelFunc, error) {
+func (project Project) WalkTodosOfDir(dirpath string, visit func(Todo) error) error {
 	cmd := exec.Command("git", "ls-files", dirpath)
 	var outb bytes.Buffer
 	cmd.Stdout = &outb
 
 	err := cmd.Run()
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	work := make(chan string)
-	output := make(chan TodoResult)
-	var workers sync.WaitGroup
-
-	for i := 0; i < runtime.NumCPU(); i++ {
-		workers.Add(1)
-		go func() {
-			defer workers.Done()
-
-			var workerErr error
-			var stat os.FileInfo
-			for filepath := range work {
-				stat, workerErr = os.Stat(filepath)
-				if workerErr != nil {
-					output <- TodoResult{nil, workerErr}
-					continue
-				}
-				if stat.IsDir() {
-					// FIXME(#145): snitch should go inside of git submodules recursively
-					fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
-					continue
-				}
-
-				workerErr = project.WalkTodosOfFile(filepath, func(todo Todo) error {
-					output <- TodoResult{&todo, nil}
-					return nil
-				})
-				if workerErr != nil {
-					output <- TodoResult{nil, workerErr}
-				}
-			}
-		}()
-	}
-
-	go func() {
-		defer cancel()
-		defer close(output)
-		defer workers.Wait()
-		defer close(work)
-
-		for scanner := bufio.NewScanner(&outb); scanner.Scan(); {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				work <- scanner.Text()
-			}
+	for scanner := bufio.NewScanner(&outb); scanner.Scan(); {
+		filepath := scanner.Text()
+		stat, err := os.Stat(filepath)
+		if err != nil {
+			return err
 		}
-	}()
 
-	return output, cancel, nil
+		if stat.IsDir() {
+			// FIXME(#145): snitch should go inside of git submodules recursively
+			fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
+			continue
+		}
+
+		err = project.WalkTodosOfFile(filepath, visit)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func yamlConfigPath(projectPath string) (string, bool) {
