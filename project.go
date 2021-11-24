@@ -94,11 +94,11 @@ func (project Project) lineAsReportedTodo(line string) *Todo {
 		groups := unreportedTodo.FindStringSubmatch(line)
 
 		if groups != nil {
-			prefix	:= groups[1]
+			prefix := groups[1]
 			urgency := groups[2]
-			id		:= groups[3]
-			suffix	:= groups[4]
-			title	:= project.Title.Transform(suffix)
+			id := groups[3]
+			suffix := groups[4]
+			title := project.Title.Transform(suffix)
 
 			return &Todo{
 				Prefix:        prefix,
