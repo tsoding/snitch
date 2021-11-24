@@ -28,11 +28,12 @@ After that you are supposed to push the new reported TODOs yourself.
 
 #### Parsing
 
-Regular expression: `^(.*)TODO: (.*)$` [Play](https://regex101.com/r/u5lkxf/2)
+Regular expression: `^(.*)TODO(O*): (.*)$` [Play](https://regex101.com/r/u5lkxf/2)
 
 Capture Groups:
 - Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
-- Group 2: **Suffix**. Used as the title of the issue.
+- Group 2: **Urgency Suffix**. Used to indicate the urgency of the TODO. The higher the amount of `O`-s, the more urgent the TODO is. (See [#Urgency] for more info)
+- Group 3: **Suffix**. Used as the title of the issue.
 
 ### Reported TODO
 
@@ -44,12 +45,13 @@ Capture Groups:
 
 #### Parsing
 
-Regular expression: `^(.*)TODO\((.*)\): (.*)$` [Play](https://regex101.com/r/5U6rjS/1)
+Regular expression: `^(.*)TODO(O*)\((.*)\): (.*)$` [Play](https://regex101.com/r/5U6rjS/1)
 
 Capture Groups:
 - Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
-- Group 2: **ID**. The number of the Issue.
-- Group 3: **Suffix**. Used as the title of the issue.
+- Group 2: **Urgency Suffix**. Used to indicate the urgency of the TODO. The higher the amount of `O`-s, the more urgent the TODO is. (See [#Urgency] for more info)
+- Group 3: **ID**. The number of the Issue.
+- Group 4: **Suffix**. Used as the title of the issue.
 
 ### TODO Body
 
@@ -69,9 +71,13 @@ Capture Groups:
 - Snitch parses all of the consecutive lines with the same prefix as the body.
 - The body is reported as the Issue Description.
 
+### Urgency
+
+The urgency system was stolen from [fixmee](https://github.com/rolandwalker/fixmee#explanation) Emacs extension. The urgency of TODOs is indicated by repetitions of the final character of the keyword. For example, one might write TODOOOOOOOOO for an important issue. The `list` subcommand will sort the TODOs in the descending order by their urgency.
+
 ## Remote specification
 
-By default Snitch will automatically reference the `origin` remote as the defacto standard for most projects. 
+By default Snitch will automatically reference the `origin` remote as the defacto standard for most projects.
 
 However, you can specify which remote Snitch uses on a per repo basis.
 
@@ -79,7 +85,7 @@ However, you can specify which remote Snitch uses on a per repo basis.
 
 Remotes are defined in `.snitch.yaml` under **remote**.
 
-#### Example 
+#### Example
 <pre>
 title:
   transforms:
