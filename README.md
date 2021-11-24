@@ -32,7 +32,7 @@ Regular expression: `^(.*)TODO(O*): (.*)$` [Play](https://regex101.com/r/u5lkxf/
 
 Capture Groups:
 - Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
-- Group 2: **Urgency Suffix**. Used to indicate the urgency of the TODO. The higher the amount of `O`-s, the more urgent the TODO is. (See [#Urgency] for more info)
+- Group 2: **Urgency Suffix**. Used to indicate the urgency of the TODO. The higher the amount of `O`-s, the more urgent the TODO is. (See [Urgency](#Urgency) for more info)
 - Group 3: **Suffix**. Used as the title of the issue.
 
 ### Reported TODO
@@ -49,7 +49,7 @@ Regular expression: `^(.*)TODO(O*)\((.*)\): (.*)$` [Play](https://regex101.com/r
 
 Capture Groups:
 - Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
-- Group 2: **Urgency Suffix**. Used to indicate the urgency of the TODO. The higher the amount of `O`-s, the more urgent the TODO is. (See [#Urgency] for more info)
+- Group 2: **Urgency Suffix**. Used to indicate the urgency of the TODO. The higher the amount of `O`-s, the more urgent the TODO is. (See [Urgency](#Urgency) for more info)
 - Group 3: **ID**. The number of the Issue.
 - Group 4: **Suffix**. Used as the title of the issue.
 
