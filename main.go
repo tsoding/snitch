@@ -39,12 +39,27 @@ func yOrN(question string, alwaysYes bool) (bool, error) {
 }
 
 func listSubcommand(project Project, filter func(todo Todo) bool) error {
-	return project.WalkTodosOfDir(".", func(todo Todo) error {
+	todosToList := []*Todo{}
+
+	err := project.WalkTodosOfDir(".", func(todo Todo) error {
 		if filter(todo) {
-			fmt.Println(todo.LogString())
+			todosToList = append(todosToList, &todo)
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	sort.Slice(todosToList, func(i, j int) bool {
+		return todosToList[i].Urgency > todosToList[j].Urgency
+	})
+
+	for _, todo := range todosToList {
+		fmt.Println(todo.LogString())
+	}
+
+	return nil
 }
 
 func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string, alwaysYes bool) error {

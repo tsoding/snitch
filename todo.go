@@ -13,6 +13,7 @@ type Todo struct {
 	Prefix        string
 	Suffix        string
 	Keyword       string
+	Urgency       int
 	ID            *string
 	Filename      string
 	Line          int
@@ -25,27 +26,30 @@ type Todo struct {
 // compatible with Emacs compilation mode, so you can easily jump
 // between the todos.
 func (todo Todo) LogString() string {
+	urgencySuffix := strings.Repeat(string(todo.Keyword[len(todo.Keyword)-1]), todo.Urgency);
+
 	if todo.ID == nil {
-		return fmt.Sprintf("%s:%d: %s%s: %s",
+		return fmt.Sprintf("%s:%d: %s%s%s: %s",
 			todo.Filename, todo.Line,
-			todo.Prefix, todo.Keyword,
+			todo.Prefix, todo.Keyword, urgencySuffix,
 			todo.Suffix)
 	}
 
-	return fmt.Sprintf("%s:%d: %s%s(%s): %s",
+	return fmt.Sprintf("%s:%d: %s%s%s(%s): %s",
 		todo.Filename, todo.Line,
-		todo.Prefix, todo.Keyword,
+		todo.Prefix, todo.Keyword, urgencySuffix,
 		*todo.ID, todo.Suffix)
 }
 
 func (todo Todo) String() string {
+	urgencySuffix := strings.Repeat(string(todo.Keyword[len(todo.Keyword)-1]), todo.Urgency);
 	if todo.ID == nil {
-		return fmt.Sprintf("%s%s: %s",
-			todo.Prefix, todo.Keyword, todo.Suffix)
+		return fmt.Sprintf("%s%s%s: %s",
+			todo.Prefix, todo.Keyword, urgencySuffix, todo.Suffix)
 	}
 
-	return fmt.Sprintf("%s%s(%s): %s",
-		todo.Prefix, todo.Keyword, *todo.ID,
+	return fmt.Sprintf("%s%s%s(%s): %s",
+		todo.Prefix, todo.Keyword, urgencySuffix, *todo.ID,
 		todo.Suffix)
 }
 

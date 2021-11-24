@@ -52,11 +52,11 @@ type Project struct {
 }
 
 func unreportedTodoRegexp(keyword string) string {
-	return "^(.*)" + regexp.QuoteMeta(keyword) + ": (.*)$"
+	return "^(.*)" + regexp.QuoteMeta(keyword) + "(" + regexp.QuoteMeta(string(keyword[len(keyword)-1])) + "*)" + ": (.*)$"
 }
 
 func reportedTodoRegexp(keyword string) string {
-	return "^(.*)" + regexp.QuoteMeta(keyword) + "\\((.*)\\): (.*)$"
+	return "^(.*)" + regexp.QuoteMeta(keyword) + "(" + regexp.QuoteMeta(string(keyword[len(keyword)-1])) + "*)" + "\\((.*)\\): (.*)$"
 }
 
 func (project Project) lineAsUnreportedTodo(line string) *Todo {
@@ -67,13 +67,15 @@ func (project Project) lineAsUnreportedTodo(line string) *Todo {
 
 		if groups != nil {
 			prefix := groups[1]
-			suffix := groups[2]
+			urgency := groups[2]
+			suffix := groups[3]
 			title := project.Title.Transform(suffix)
 
 			return &Todo{
 				Prefix:        prefix,
 				Suffix:        suffix,
 				Keyword:       keyword,
+				Urgency:       len(urgency),
 				ID:            nil,
 				Filename:      "",
 				Line:          0,
@@ -92,15 +94,17 @@ func (project Project) lineAsReportedTodo(line string) *Todo {
 		groups := unreportedTodo.FindStringSubmatch(line)
 
 		if groups != nil {
-			prefix := groups[1]
-			suffix := groups[3]
-			id := groups[2]
-			title := project.Title.Transform(suffix)
+			prefix	:= groups[1]
+			urgency := groups[2]
+			id		:= groups[3]
+			suffix	:= groups[4]
+			title	:= project.Title.Transform(suffix)
 
 			return &Todo{
 				Prefix:        prefix,
 				Suffix:        suffix,
 				Keyword:       keyword,
+				Urgency:       len(urgency),
 				ID:            &id,
 				Filename:      "",
 				Line:          0,
