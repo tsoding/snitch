@@ -173,11 +173,23 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string, alwaysYes boo
 }
 
 func usage() {
-	// FIXME(#9): implement a map for options instead of println'ing them all there
-	fmt.Printf("snitch [opt]\n" +
-		"\tlist [--unreported] [--reported] [--y] [--remote]: lists all todos of a dir recursively\n" +
-		"\treport [--prepend-body <issue-body>] [--y] [--remote]: reports all todos of a dir recursively \n\t\tas GitHub issues\n" +
-		"\tpurge [--remote]: removes all of the reported TODOs that refer to closed issues\n")
+	help := map[string]string{
+		"list":   "[--unreported] [--reported] [--y] [--remote]: lists all todos of a dir recursively",
+		"report": "[--prepend-body <issue-body>] [--y] [--remote]: reports all todos of a dir recursively as Github issues",
+		"purge":  "[--remote]: removes all of the reported TODOs that refer to closed issues",
+	}
+
+	keys := make([]string, 0)
+
+	for k, _ := range help {
+		keys = append(keys, k)
+	}
+
+	// sorting the map into a slice
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Println(k, help[k])
+	}
 }
 
 func locateDotGit(dir string) (string, error) {
