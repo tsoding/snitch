@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -45,10 +46,11 @@ const defaultBodySeparator = "---"
 
 // Project contains the project level configuration
 type Project struct {
-	Title         *TitleConfig
-	Keywords      []string
-	BodySeparator string
-	Remote        string
+	Title             *TitleConfig
+	Keywords          []string
+	BodySeparator     string
+	Remote            string
+	IgnoredExtensions []string
 }
 
 func unreportedTodoRegexp(keyword string) string {
@@ -217,6 +219,19 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(Todo) error) er
 			continue
 		}
 
+		isIgnored := false
+
+		for _, extension := range project.IgnoredExtensions {
+			if strings.HasSuffix(filepath, extension) {
+				isIgnored = true
+				break
+			}
+		}
+
+		if isIgnored {
+			continue
+		}
+
 		err = project.WalkTodosOfFile(filepath, visit)
 		if err != nil {
 			return err
@@ -244,8 +259,9 @@ func NewProject(filePath string) (*Project, error) {
 		Title: &TitleConfig{
 			Transforms: []*TransformRule{},
 		},
-		Keywords:      []string{},
-		BodySeparator: defaultBodySeparator,
+		Keywords:          []string{},
+		BodySeparator:     defaultBodySeparator,
+		IgnoredExtensions: []string{},
 	}
 
 	if configPath, ok := yamlConfigPath(filePath); ok {
@@ -264,6 +280,10 @@ func NewProject(filePath string) (*Project, error) {
 
 	if len(project.Keywords) == 0 {
 		project.Keywords = []string{"TODO"}
+	}
+
+	if len(project.IgnoredExtensions) == 0 {
+		project.IgnoredExtensions = []string{".exe", ".dll", ".so"}
 	}
 
 	return project, nil
