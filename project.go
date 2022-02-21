@@ -45,10 +45,11 @@ const defaultBodySeparator = "---"
 
 // Project contains the project level configuration
 type Project struct {
-	Title         *TitleConfig
-	Keywords      []string
-	BodySeparator string
-	Remote        string
+	Title             *TitleConfig
+	Keywords          []string
+	BodySeparator     string
+	Remote            string
+	IgnoredExtensions []string
 }
 
 func unreportedTodoRegexp(keyword string) string {
@@ -244,8 +245,9 @@ func NewProject(filePath string) (*Project, error) {
 		Title: &TitleConfig{
 			Transforms: []*TransformRule{},
 		},
-		Keywords:      []string{},
-		BodySeparator: defaultBodySeparator,
+		Keywords:          []string{},
+		BodySeparator:     defaultBodySeparator,
+		IgnoredExtensions: []string{},
 	}
 
 	if configPath, ok := yamlConfigPath(filePath); ok {
@@ -264,6 +266,10 @@ func NewProject(filePath string) (*Project, error) {
 
 	if len(project.Keywords) == 0 {
 		project.Keywords = []string{"TODO"}
+	}
+
+	if len(project.IgnoredExtensions) == 0 {
+		project.IgnoredExtensions = []string{".exe", ".dll", ".so"}
 	}
 
 	return project, nil
