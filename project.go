@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -215,6 +216,19 @@ func (project Project) WalkTodosOfDir(dirpath string, visit func(Todo) error) er
 		if stat.IsDir() {
 			// FIXME(#145): snitch should go inside of git submodules recursively
 			fmt.Printf("[WARN] `%s` is probably a submodule. Skipping it for now...\n", filepath)
+			continue
+		}
+
+		isIgnored := false
+
+		for _, extension := range project.IgnoredExtensions {
+			if strings.HasSuffix(filepath, extension) {
+				isIgnored = true
+				break
+			}
+		}
+
+		if isIgnored {
 			continue
 		}
 
