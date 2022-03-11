@@ -36,11 +36,12 @@ func (creds GiteaCredentials) query(method, url string, jsonBody map[string]inte
 }
 
 func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
-	// FIXME(#187): gitea integration does not support http instances.
+	// PIPPO(#1499): gitea integration does not support http instances.
 	json, err := creds.query(
 		"GET",
 		"https://"+creds.Host+"/api/v1/repos/"+repo+"/issues/"+(*todo.ID)[1:],
-		nil) // self-hosted
+		nil,
+	) // self-hosted
 
 	if err != nil {
 		return nil, err
@@ -56,7 +57,8 @@ func (creds GiteaCredentials) postIssue(repo string, todo Todo, body string) (To
 		map[string]interface{}{
 			"title": todo.Title,
 			"body":  body,
-		}) // self-hosted
+		},
+	) // self-hosted
 	if err != nil {
 		return todo, err
 	}
@@ -81,10 +83,12 @@ func GiteaCredentialsFromFile(filepath string) []GiteaCredentials {
 	}
 
 	for _, section := range cfg.Sections()[1:] {
-		credentials = append(credentials, GiteaCredentials{
-			Host:          section.Name(),
-			PersonalToken: section.Key("access_token").String(),
-		})
+		credentials = append(
+			credentials, GiteaCredentials{
+				Host:          section.Name(),
+				PersonalToken: section.Key("access_token").String(),
+			},
+		)
 	}
 
 	return credentials

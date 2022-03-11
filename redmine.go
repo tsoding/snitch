@@ -4,20 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/ini.v1"
 	"net/http"
 	"os"
 	"os/user"
 	"path"
 	"strconv"
+
+	"gopkg.in/ini.v1"
 )
 
-// RedmineCredentials contains PersonalToken for Redmine API authorization
-type RedmineCredentials struct {
+// RedmineSpec contains PersonalToken for Redmine API authorization
+type RedmineSpec struct {
 	PersonalToken string
+	BaseURL       string
 }
 
-func (creds RedmineCredentials) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
+func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
 
@@ -26,18 +28,18 @@ func (creds RedmineCredentials) query(method, url string, jsonBody map[string]in
 		return nil, err
 	}
 
-	req.Header.Add("Authorization", "token "+creds.PersonalToken)
+	req.Header.Add("X-Redmine-API-Key", creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
 
 	return QueryHTTP(req)
 }
 
-func (creds RedmineCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
+func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 	json, err := creds.query(
 		"GET",
-		// TODO: make this configurable via ini file
-		fmt.Sprintf("https://redmine.sighup-prod.sighup.io/issues/%s.json", (*todo.ID)[1:]),
-		nil)
+		fmt.Sprintf("%s/issues/%s.json", creds.BaseURL, (*todo.ID)[1:]),
+		nil,
+	)
 
 	if err != nil {
 		return nil, err
@@ -48,14 +50,28 @@ func (creds RedmineCredentials) getIssue(repo string, todo Todo) (map[string]int
 	return json, nil
 }
 
-func (creds RedmineCredentials) postIssue(repo string, todo Todo, body string) (Todo, error) {
+func (creds RedmineSpec) getProject() {
+	//https://redmine.sighup-prod.sighup.io/search.json?q=fury-fleet-api&projects=1&titles_only=1
+	json, err := creds.query(
+		"GET",
+		fmt.Sprintf("%s/search.json?q=fury-fleet-api&projects=1&titles_only=1", creds.BaseURL),
+		map[string]interface{}{
+			"subject":     todo.Title,
+			"description": body,
+			"project_id":  creds.getProject(),
+		},
+}
+
+func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, error) {
 	json, err := creds.query(
 		"POST",
-		"https://api.github.com/repos/"+repo+"/issues",
+		fmt.Sprintf("%s/issues.json", creds.BaseURL),
 		map[string]interface{}{
-			"title": todo.Title,
-			"body":  body,
-		})
+			"subject":     todo.Title,
+			"description": body,
+			"project_id":  creds.getProject(),
+		},
+	)
 	if err != nil {
 		return todo, err
 	}
@@ -66,30 +82,31 @@ func (creds RedmineCredentials) postIssue(repo string, todo Todo, body string) (
 	return todo, err
 }
 
-func (creds RedmineCredentials) getHost() string {
+func (creds RedmineSpec) getHost() string {
 	return "github.com"
 }
 
-// RedmineCredentialsFromFile gets RedmineCredentials from a filepath
-func RedmineCredentialsFromFile(filepath string) (RedmineCredentials, error) {
+// RedmineCredentialsFromFile gets RedmineSpec from a filepath
+func RedmineCredentialsFromFile(filepath string) (RedmineSpec, error) {
 	cfg, err := ini.Load(filepath)
 	if err != nil {
-		return RedmineCredentials{}, err
+		return RedmineSpec{}, err
 	}
 
-	return RedmineCredentials{
+	return RedmineSpec{
 		PersonalToken: cfg.Section("redmine").Key("personal_token").String(),
+		BaseURL:       cfg.Section("redmine").Key("base_url").String(),
 	}, nil
 }
 
-// RedmineCredentialsFromToken returns a RedmineCredentials from a string token
-func RedmineCredentialsFromToken(token string) RedmineCredentials {
-	return RedmineCredentials{
+// RedmineCredentialsFromToken returns a RedmineSpec from a string token
+func RedmineCredentialsFromToken(token string) RedmineSpec {
+	return RedmineSpec{
 		PersonalToken: token,
 	}
 }
 
-func getRedmineCredentials() (RedmineCredentials, error) {
+func getRedmineCredentials() (RedmineSpec, error) {
 	tokenEnvar := os.Getenv("GITHUB_PERSONAL_TOKEN")
 	xdgEnvar := os.Getenv("XDG_CONFIG_HOME")
 	usr, err := user.Current()
@@ -124,5 +141,5 @@ func getRedmineCredentials() (RedmineCredentials, error) {
 		return RedmineCredentialsFromFile(filePath)
 	}
 
-	return RedmineCredentials{}, fmt.Errorf("Redmine token is missing")
+	return RedmineSpec{}, fmt.Errorf("Redmine token is missing")
 }

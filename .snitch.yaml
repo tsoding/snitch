@@ -5,5 +5,5 @@ title:
     - match: (.*) \*\}
       replace: $1
 keywords:
-  - FIXME
+  - PIPPO
 remote: origin
