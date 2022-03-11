@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path"
 	"strconv"
+	"strings"
 
 	"gopkg.in/ini.v1"
 )
@@ -50,26 +51,29 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 	return json, nil
 }
 
-func (creds RedmineSpec) getProject() {
-	//https://redmine.sighup-prod.sighup.io/search.json?q=fury-fleet-api&projects=1&titles_only=1
-	json, err := creds.query(
+func (creds RedmineSpec) getProject(project string) (string,error) {
+
+	query, err := creds.query(
 		"GET",
-		fmt.Sprintf("%s/search.json?q=fury-fleet-api&projects=1&titles_only=1", creds.BaseURL),
-		map[string]interface{}{
-			"subject":     todo.Title,
-			"description": body,
-			"project_id":  creds.getProject(),
-		},
+		fmt.Sprintf("%s/search.json?q=%s&projects=1&titles_only=1", creds.BaseURL, project),
+		nil,
+	)
+
+	project :=
+
+	return query["results"][0]
 }
 
 func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, error) {
+	project := strings.Split(repo, "/")[1]
+
 	json, err := creds.query(
 		"POST",
 		fmt.Sprintf("%s/issues.json", creds.BaseURL),
 		map[string]interface{}{
 			"subject":     todo.Title,
 			"description": body,
-			"project_id":  creds.getProject(),
+			"project_id":  creds.getProject(project),
 		},
 	)
 	if err != nil {
