@@ -382,6 +382,9 @@ func getCredentials() []IssueAPI {
 	if github, err := getGithubCredentials(); err == nil {
 		creds = append(creds, github)
 	}
+	if redmine, err := getRedmineCredentials(); err == nil {
+		creds = append(creds, redmine)
+	}
 	creds = getGitlabCredentials(creds)
 	creds = getGiteaCredentials(creds)
 	return creds

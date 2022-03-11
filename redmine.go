@@ -35,12 +35,15 @@ func (creds RedmineCredentials) query(method, url string, jsonBody map[string]in
 func (creds RedmineCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 	json, err := creds.query(
 		"GET",
-		fmt.Sprintf("https://redmine.sighup-prod.sighup.io/issues/%s", (*todo.ID)[1:]),
+		// TODO: make this configurable via ini file
+		fmt.Sprintf("https://redmine.sighup-prod.sighup.io/issues/%s.json", (*todo.ID)[1:]),
 		nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(json)
 
 	return json, nil
 }
@@ -102,7 +105,7 @@ func getRedmineCredentials() (RedmineCredentials, error) {
 
 	// custom XDG_CONFIG_HOME
 	if len(xdgEnvar) != 0 {
-		filePath := path.Join(xdgEnvar, "snitch/github.ini")
+		filePath := path.Join(xdgEnvar, "snitch/redmine.ini")
 		if _, err := os.Stat(filePath); err == nil {
 			return RedmineCredentialsFromFile(filePath)
 		}
@@ -110,13 +113,13 @@ func getRedmineCredentials() (RedmineCredentials, error) {
 
 	// default XDG_CONFIG_HOME
 	if len(xdgEnvar) == 0 {
-		filePath := path.Join(usr.HomeDir, ".config/snitch/github.ini")
+		filePath := path.Join(usr.HomeDir, ".config/snitch/redmine.ini")
 		if _, err := os.Stat(filePath); err == nil {
 			return RedmineCredentialsFromFile(filePath)
 		}
 	}
 
-	filePath := path.Join(usr.HomeDir, ".snitch/github.ini")
+	filePath := path.Join(usr.HomeDir, ".snitch/redmine.ini")
 	if _, err := os.Stat(filePath); err == nil {
 		return RedmineCredentialsFromFile(filePath)
 	}
