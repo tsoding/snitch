@@ -35,7 +35,33 @@ func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface
 	return QueryHTTP(req)
 }
 
+func (creds *RedmineSpec) checkIfIssueExists(issueID *string) (bool, error) {
+	url := creds.BaseURL + "/issues.json?issue_id=" + *issueID
+
+	resp, err := creds.query("GET", url, nil)
+	if err != nil {
+		return false, err
+	}
+
+	if resp["total_count"] == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
+
+	ok, err := creds.checkIfIssueExists(todo.ID)
+
+	if !ok {
+		return nil, fmt.Errorf("Issue %s not found", *(todo.ID))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
 	json, err := creds.query(
 		"GET",
 		fmt.Sprintf("%s/issues/%s.json", creds.BaseURL, (*todo.ID)[1:]),
@@ -51,21 +77,34 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 	return json, nil
 }
 
-func (creds RedmineSpec) getProject(project string) (string,error) {
+func (creds RedmineSpec) getProject(project string) (string, error) {
 
 	query, err := creds.query(
 		"GET",
 		fmt.Sprintf("%s/search.json?q=%s&projects=1&titles_only=1", creds.BaseURL, project),
 		nil,
 	)
+	if err != nil {
+		return "", err
+	}
 
-	project :=
+	fmt.Printf("%+v\n", query)
 
-	return query["results"][0]
+	return "", nil
+
+	//project :=
+
+	//return query["results"][0]
 }
 
 func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, error) {
 	project := strings.Split(repo, "/")[1]
+
+	projectID, err := creds.getProject(project)
+
+	if err != nil {
+		return Todo{}, err
+	}
 
 	json, err := creds.query(
 		"POST",
@@ -73,7 +112,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 		map[string]interface{}{
 			"subject":     todo.Title,
 			"description": body,
-			"project_id":  creds.getProject(project),
+			"project_id":  projectID,
 		},
 	)
 	if err != nil {
