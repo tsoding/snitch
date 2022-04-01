@@ -2,4 +2,5 @@ snitch
 main
 src/
 bin/
+vendor/
 *~
