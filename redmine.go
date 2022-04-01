@@ -9,7 +9,6 @@ import (
 	"os/user"
 	"path"
 	"strconv"
-	"strings"
 
 	"gopkg.in/ini.v1"
 )
@@ -18,6 +17,37 @@ import (
 type RedmineSpec struct {
 	PersonalToken string
 	BaseURL       string
+}
+
+type SearchQuery struct {
+	Limit      int     `json:"limit"`
+	Offset     int     `json:"offset"`
+	Results    []Issue `json:"results"`
+	TotalCount int     `json:"total_count"`
+}
+
+type Issue struct {
+	ID          int    `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Project     string `json:"project"`
+	Type        string `json:"type"`
+	URL         string `json:"url"`
+	Datetime    string `json:"datetime"`
+}
+
+func (creds RedmineSpec) search(method, url string, jsonBody map[string]interface{}) (SearchQuery, error) {
+	bodyBuffer := new(bytes.Buffer)
+	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
+
+	req, err := http.NewRequest(method, url, bodyBuffer)
+	if err != nil {
+		return SearchQuery{}, err
+	}
+
+	req.Header.Add("X-Redmine-API-Key", creds.PersonalToken)
+	req.Header.Add("Content-Type", "application/json")
+
 }
 
 func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
@@ -50,6 +80,7 @@ func (creds *RedmineSpec) checkIfIssueExists(issueID *string) (bool, error) {
 	return true, nil
 }
 
+//PIPPO: this is a test
 func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 
 	ok, err := creds.checkIfIssueExists(todo.ID)
@@ -78,28 +109,30 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 }
 
 func (creds RedmineSpec) getProject(project string) (string, error) {
-
 	query, err := creds.query(
 		"GET",
 		fmt.Sprintf("%s/search.json?q=%s&projects=1&titles_only=1", creds.BaseURL, project),
 		nil,
 	)
+
 	if err != nil {
 		return "", err
 	}
 
-	fmt.Printf("%+v\n", query)
+	if query["total_count"] == 0 {
+		return "", fmt.Errorf("Project %s not found", project)
+	}
 
-	return "", nil
+	return query["results"][0]["id"], nil
 
 	//project :=
-
+	//
 	//return query["results"][0]
 }
 
 func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, error) {
-	project := strings.Split(repo, "/")[1]
-
+	//project := strings.Split(repo, "/")[1]
+	project := "test-gh-rm-integration"
 	projectID, err := creds.getProject(project)
 
 	if err != nil {
