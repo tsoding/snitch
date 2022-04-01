@@ -156,6 +156,7 @@ func (creds RedmineSpec) getProject(project string) (int, error) {
 }
 
 func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, error) {
+	// PIPPO(#2039): replace hard-coded project with one that can be passed from config
 	//project := strings.Split(repo, "/")[1]
 	project := "test-gh-rm-integration"
 	projectID, err := creds.getProject(project)
@@ -172,7 +173,6 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 				"subject":     todo.Title,
 				"description": body,
 				"project_id":  projectID,
-				"priority_id": 2,
 			},
 		},
 	)
@@ -187,7 +187,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 }
 
 func (creds RedmineSpec) getHost() string {
-	return "github.com"
+	return ""
 }
 
 // RedmineCredentialsFromFile gets RedmineSpec from a filepath
