@@ -27,13 +27,18 @@ type SearchQuery struct {
 }
 
 type Issue struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Project     string `json:"project"`
-	Type        string `json:"type"`
-	URL         string `json:"url"`
-	Datetime    string `json:"datetime"`
+	ID          int            `json:"id"`
+	Subject     string         `json:"subject"`
+	Description string         `json:"description"`
+	Project     RedmineProject `json:"project"`
+	Type        string         `json:"type"`
+	URL         string         `json:"url"`
+	Datetime    string         `json:"datetime"`
+}
+
+type RedmineProject struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 func (creds RedmineSpec) search(method, url string, jsonBody map[string]interface{}) (SearchQuery, error) {
@@ -48,6 +53,22 @@ func (creds RedmineSpec) search(method, url string, jsonBody map[string]interfac
 	req.Header.Add("X-Redmine-API-Key", creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
 
+	return SearchQueryHTTP(req)
+}
+
+func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]interface{}) (Issue, error) {
+	bodyBuffer := new(bytes.Buffer)
+	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
+
+	req, err := http.NewRequest(method, url, bodyBuffer)
+	if err != nil {
+		return Issue{}, err
+	}
+
+	req.Header.Add("X-Redmine-API-Key", creds.PersonalToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	return SearchQueryHTTP(req)
 }
 
 func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
@@ -108,22 +129,22 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 	return json, nil
 }
 
-func (creds RedmineSpec) getProject(project string) (string, error) {
-	query, err := creds.query(
+func (creds RedmineSpec) getProject(project string) (int, error) {
+	query, err := creds.search(
 		"GET",
 		fmt.Sprintf("%s/search.json?q=%s&projects=1&titles_only=1", creds.BaseURL, project),
 		nil,
 	)
 
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	if query["total_count"] == 0 {
-		return "", fmt.Errorf("Project %s not found", project)
+	if query.TotalCount == 0 {
+		return 0, fmt.Errorf("Project %s not found", project)
 	}
 
-	return query["results"][0]["id"], nil
+	return query.Results[0].ID, nil
 
 	//project :=
 	//
@@ -143,16 +164,19 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 		"POST",
 		fmt.Sprintf("%s/issues.json", creds.BaseURL),
 		map[string]interface{}{
-			"subject":     todo.Title,
-			"description": body,
-			"project_id":  projectID,
+			"issue": map[string]interface{}{
+				"subject":     todo.Title,
+				"description": body,
+				"project_id":  projectID,
+				"priority_id": 2,
+			},
 		},
 	)
 	if err != nil {
 		return todo, err
 	}
 
-	id := "#" + strconv.Itoa(int(json["number"].(float64)))
+	id := "#" + strconv.Itoa(int(json["issue"]["id"].(float64)))
 	todo.ID = &id
 
 	return todo, err

@@ -39,26 +39,25 @@ func QueryHTTP(req *http.Request) (map[string]interface{}, error) {
 	return v, err
 }
 
-//TODO:
-//func QueryHTTP(req *http.Request) (map[string]interface{}, error) {
-//	client := &http.Client{}
-//
-//	resp, err := client.Do(req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer resp.Body.Close()
-//
-//	if resp.StatusCode >= 400 {
-//		buf := new(bytes.Buffer)
-//		buf.ReadFrom(resp.Body)
-//		return nil, fmt.Errorf("API error: %s", buf.String())
-//	}
-//
-//	var v map[string]interface{}
-//	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
-//		return nil, err
-//	}
-//
-//	return v, err
-//}
+func SearchQueryHTTP(req *http.Request) (SearchQuery, error) {
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return SearchQuery{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		return SearchQuery{}, fmt.Errorf("API error: %s", buf.String())
+	}
+
+	var s SearchQuery
+	if err := json.NewDecoder(resp.Body).Decode(&s); err != nil {
+		return SearchQuery{}, err
+	}
+
+	return s, nil
+}
