@@ -61,3 +61,26 @@ func SearchQueryHTTP(req *http.Request) (SearchQuery, error) {
 
 	return s, nil
 }
+
+func createIssueQuery(req *http.Request) (IssueResponse, error) {
+	client := new(http.Client)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return IssueResponse{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		return IssueResponse{}, fmt.Errorf("API error: %s", buf.String())
+	}
+
+	var i IssueResponse
+	if err := json.NewDecoder(resp.Body).Decode(&i); err != nil {
+		return IssueResponse{}, err
+	}
+
+	return i, nil
+}
