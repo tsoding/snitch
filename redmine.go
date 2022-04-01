@@ -19,6 +19,10 @@ type RedmineSpec struct {
 	BaseURL       string
 }
 
+type IssueResponse struct {
+	Issue Issue `json:"issue"`
+}
+
 type SearchQuery struct {
 	Limit      int     `json:"limit"`
 	Offset     int     `json:"offset"`
@@ -56,19 +60,19 @@ func (creds RedmineSpec) search(method, url string, jsonBody map[string]interfac
 	return SearchQueryHTTP(req)
 }
 
-func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]interface{}) (Issue, error) {
+func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]interface{}) (IssueResponse, error) {
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
 
 	req, err := http.NewRequest(method, url, bodyBuffer)
 	if err != nil {
-		return Issue{}, err
+		return IssueResponse{}, err
 	}
 
 	req.Header.Add("X-Redmine-API-Key", creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
 
-	return SearchQueryHTTP(req)
+	return createIssueQuery(req)
 }
 
 func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
@@ -101,7 +105,7 @@ func (creds *RedmineSpec) checkIfIssueExists(issueID *string) (bool, error) {
 	return true, nil
 }
 
-//PIPPO: this is a test
+//PIPPO(#2027): this is a test
 func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 
 	ok, err := creds.checkIfIssueExists(todo.ID)
@@ -160,7 +164,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 		return Todo{}, err
 	}
 
-	json, err := creds.query(
+	json, err := creds.postIssueQuery(
 		"POST",
 		fmt.Sprintf("%s/issues.json", creds.BaseURL),
 		map[string]interface{}{
@@ -176,7 +180,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 		return todo, err
 	}
 
-	id := "#" + strconv.Itoa(int(json["issue"]["id"].(float64)))
+	id := "#" + strconv.Itoa(json.Issue.ID)
 	todo.ID = &id
 
 	return todo, err
