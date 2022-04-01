@@ -9,9 +9,13 @@ import (
 	"os/user"
 	"path"
 	"strconv"
+	"strings"
 
 	"gopkg.in/ini.v1"
 )
+
+// DAFARE(#2044): make this configurable via redmine.ini
+const defaultTrackerId = 13
 
 // RedmineSpec contains PersonalToken for Redmine API authorization
 type RedmineSpec struct {
@@ -45,11 +49,8 @@ type RedmineProject struct {
 	Name string `json:"name"`
 }
 
-func (creds RedmineSpec) search(method, url string, jsonBody map[string]interface{}) (SearchQuery, error) {
-	bodyBuffer := new(bytes.Buffer)
-	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
-
-	req, err := http.NewRequest(method, url, bodyBuffer)
+func (creds RedmineSpec) search(url string) (SearchQuery, error) {
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return SearchQuery{}, err
 	}
@@ -135,11 +136,8 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 
 func (creds RedmineSpec) getProject(project string) (int, error) {
 	query, err := creds.search(
-		"GET",
 		fmt.Sprintf("%s/search.json?q=%s&projects=1&titles_only=1", creds.BaseURL, project),
-		nil,
 	)
-
 	if err != nil {
 		return 0, err
 	}
@@ -149,16 +147,10 @@ func (creds RedmineSpec) getProject(project string) (int, error) {
 	}
 
 	return query.Results[0].ID, nil
-
-	//project :=
-	//
-	//return query["results"][0]
 }
 
 func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, error) {
-	// PIPPO(#2039): replace hard-coded project with one that can be passed from config
-	//project := strings.Split(repo, "/")[1]
-	project := "test-gh-rm-integration"
+	project := strings.Split(repo, "/")[1]
 	projectID, err := creds.getProject(project)
 
 	if err != nil {
@@ -173,6 +165,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 				"subject":     todo.Title,
 				"description": body,
 				"project_id":  projectID,
+				"tracker_id":  defaultTrackerId,
 			},
 		},
 	)
