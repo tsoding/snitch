@@ -49,6 +49,7 @@ func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]inter
 	return json, nil
 }
 
+// IsClosed tells if the given status is closed on the given provider, as the label may vary across different ones
 func (creds GiteaCredentials) IsClosed(status string) bool {
 	return status == "closed"
 }

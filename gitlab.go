@@ -44,6 +44,7 @@ func (creds GitlabCredentials) getIssue(repo string, todo Todo) (map[string]inte
 	return json, nil
 }
 
+// IsClosed tells if the given status is closed on the given provider, as the label may vary across different ones
 func (creds GitlabCredentials) IsClosed(status string) bool {
 	return status == "closed"
 }

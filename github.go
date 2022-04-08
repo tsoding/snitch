@@ -33,6 +33,7 @@ func (creds GithubCredentials) query(method, url string, jsonBody map[string]int
 	return QueryHTTP(req)
 }
 
+// IsClosed tells if the given status is closed on the given provider, as the label may vary across different ones
 func (creds GithubCredentials) IsClosed(status string) bool {
 	return status == "closed"
 }

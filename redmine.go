@@ -21,21 +21,6 @@ type RedmineCredentials struct {
 	CVSBaseURL    string
 }
 
-type Issue struct {
-	ID          int            `json:"id"`
-	Subject     string         `json:"subject"`
-	Description string         `json:"description"`
-	Project     RedmineProject `json:"project"`
-	Type        string         `json:"type"`
-	URL         string         `json:"url"`
-	Datetime    string         `json:"datetime"`
-}
-
-type RedmineProject struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
 func (creds RedmineCredentials) search(url string) (map[string]interface{}, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
