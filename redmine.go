@@ -13,8 +13,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-// RedmineSpec contains PersonalToken for Redmine API authorization
-type RedmineSpec struct {
+// RedmineCredentials contains PersonalToken for Redmine API authorization
+type RedmineCredentials struct {
 	PersonalToken string
 	BaseURL       string
 	TrackerID     string
@@ -37,7 +37,7 @@ type RedmineProject struct {
 }
 
 //FIXME(#2129): this is a test
-func (creds RedmineSpec) search(url string) (map[string]interface{}, error) {
+func (creds RedmineCredentials) search(url string) (map[string]interface{}, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (creds RedmineSpec) search(url string) (map[string]interface{}, error) {
 	return QueryHTTP(req)
 }
 
-func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
+func (creds RedmineCredentials) postIssueQuery(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
 
@@ -64,14 +64,14 @@ func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]
 	return QueryHTTP(req)
 }
 
-func (creds RedmineSpec) IsClosed(status string) bool {
+func (creds RedmineCredentials) IsClosed(status string) bool {
 	if status == "Done" {
 		return true
 	}
 	return false
 }
 
-func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
+func (creds RedmineCredentials) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
 
@@ -86,7 +86,7 @@ func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface
 	return QueryHTTP(req)
 }
 
-func (creds *RedmineSpec) checkIfIssueExists(issueID *string) (bool, error) {
+func (creds *RedmineCredentials) checkIfIssueExists(issueID *string) (bool, error) {
 
 	url := creds.BaseURL + "/issues.json?issue_id=" + *issueID
 
@@ -103,7 +103,7 @@ func (creds *RedmineSpec) checkIfIssueExists(issueID *string) (bool, error) {
 }
 
 //PIPPO(#2027): this is a test
-func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
+func (creds RedmineCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 
 	id := (*todo.ID)[1:]
 	ok, err := creds.checkIfIssueExists(&id)
@@ -131,7 +131,7 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 	return json, nil
 }
 
-func (creds RedmineSpec) getProject(project string) (int, error) {
+func (creds RedmineCredentials) getProject(project string) (int, error) {
 	resp, err := creds.search(
 		fmt.Sprintf("%s/search.json?q=%s&projects=1&titles_only=1", creds.BaseURL, project),
 	)
@@ -148,7 +148,7 @@ func (creds RedmineSpec) getProject(project string) (int, error) {
 	return int(issueID), nil
 }
 
-func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, error) {
+func (creds RedmineCredentials) postIssue(repo string, todo Todo, body string) (Todo, error) {
 	project := strings.Split(repo, "/")[1]
 	projectID, err := creds.getProject(project)
 
@@ -178,18 +178,18 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 	return todo, err
 }
 
-func (creds RedmineSpec) getHost() string {
+func (creds RedmineCredentials) getHost() string {
 	return creds.CVSBaseURL
 }
 
-// RedmineCredentialsFromFile gets RedmineSpec from a filepath
-func RedmineCredentialsFromFile(filepath string) (RedmineSpec, error) {
+// RedmineCredentialsFromFile gets RedmineCredentials from a filepath
+func RedmineCredentialsFromFile(filepath string) (RedmineCredentials, error) {
 	cfg, err := ini.Load(filepath)
 	if err != nil {
-		return RedmineSpec{}, err
+		return RedmineCredentials{}, err
 	}
 
-	return RedmineSpec{
+	return RedmineCredentials{
 		PersonalToken: cfg.Section("redmine").Key("personal_token").String(),
 		BaseURL:       cfg.Section("redmine").Key("base_url").String(),
 		TrackerID:     cfg.Section("redmine").Key("tracker_id").String(),
@@ -197,14 +197,14 @@ func RedmineCredentialsFromFile(filepath string) (RedmineSpec, error) {
 	}, nil
 }
 
-// RedmineCredentialsFromToken returns a RedmineSpec from a string token
-func RedmineCredentialsFromToken(token string) RedmineSpec {
-	return RedmineSpec{
+// RedmineCredentialsFromToken returns a RedmineCredentials from a string token
+func RedmineCredentialsFromToken(token string) RedmineCredentials {
+	return RedmineCredentials{
 		PersonalToken: token,
 	}
 }
 
-func getRedmineCredentials() (RedmineSpec, error) {
+func getRedmineCredentials() (RedmineCredentials, error) {
 	tokenEnvar := os.Getenv("GITHUB_PERSONAL_TOKEN")
 	xdgEnvar := os.Getenv("XDG_CONFIG_HOME")
 	usr, err := user.Current()
@@ -239,5 +239,5 @@ func getRedmineCredentials() (RedmineSpec, error) {
 		return RedmineCredentialsFromFile(filePath)
 	}
 
-	return RedmineSpec{}, fmt.Errorf("Redmine token is missing")
+	return RedmineCredentials{}, fmt.Errorf("Redmine token is missing")
 }
