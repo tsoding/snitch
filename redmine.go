@@ -19,6 +19,7 @@ type RedmineSpec struct {
 	PersonalToken string
 	BaseURL       string
 	TrackerID     string
+	CVSBaseURL    string
 }
 
 type SearchQuery struct {
@@ -184,7 +185,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 }
 
 func (creds RedmineSpec) getHost() string {
-	return ""
+	return creds.CVSBaseURL
 }
 
 // RedmineCredentialsFromFile gets RedmineSpec from a filepath
@@ -198,6 +199,7 @@ func RedmineCredentialsFromFile(filepath string) (RedmineSpec, error) {
 		PersonalToken: cfg.Section("redmine").Key("personal_token").String(),
 		BaseURL:       cfg.Section("redmine").Key("base_url").String(),
 		TrackerID:     cfg.Section("redmine").Key("tracker_id").String(),
+		CVSBaseURL:    cfg.Section("redmine").Key("cvs_base_url").String(),
 	}, nil
 }
 
