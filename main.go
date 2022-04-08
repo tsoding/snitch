@@ -81,7 +81,6 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 			}
 
 			yes, err := yOrN("Do you want to report this? ", alwaysYes)
-
 			if err != nil {
 				return err
 			}

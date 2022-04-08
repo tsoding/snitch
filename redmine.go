@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"strconv"
 	"strings"
 
 	"gopkg.in/ini.v1"
@@ -20,13 +19,6 @@ type RedmineSpec struct {
 	BaseURL       string
 	TrackerID     string
 	CVSBaseURL    string
-}
-
-type SearchQuery struct {
-	Limit      int     `json:"limit"`
-	Offset     int     `json:"offset"`
-	Results    []Issue `json:"results"`
-	TotalCount int     `json:"total_count"`
 }
 
 type Issue struct {
@@ -44,17 +36,17 @@ type RedmineProject struct {
 	Name string `json:"name"`
 }
 
-//FIXME: переделать на простой массив и проверку на наличие в нем значения
-func (creds RedmineSpec) search(url string) (SearchQuery, error) {
+//FIXME(#2129): this is a test
+func (creds RedmineSpec) search(url string) (map[string]interface{}, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return SearchQuery{}, err
+		return nil, err
 	}
 
 	req.Header.Add("X-Redmine-API-Key", creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
 
-	return SearchQueryHTTP(req)
+	return QueryHTTP(req)
 }
 
 func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
@@ -140,18 +132,20 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 }
 
 func (creds RedmineSpec) getProject(project string) (int, error) {
-	query, err := creds.search(
+	resp, err := creds.search(
 		fmt.Sprintf("%s/search.json?q=%s&projects=1&titles_only=1", creds.BaseURL, project),
 	)
 	if err != nil {
 		return 0, err
 	}
 
-	if query.TotalCount == 0 {
+	if resp["total_count"] == 0 {
 		return 0, fmt.Errorf("Project %s not found", project)
 	}
 
-	return query.Results[0].ID, nil
+	issueID := resp["results"].([]interface{})[0].(map[string]interface{})["id"].(float64)
+
+	return int(issueID), nil
 }
 
 func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, error) {
@@ -178,7 +172,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 		return todo, err
 	}
 
-	id := "#" + strconv.Itoa(json["issue"].(map[string]interface{})["id"].(int))
+	id := fmt.Sprintf("#%d", int(json["issue"].(map[string]interface{})["id"].(float64)))
 	todo.ID = &id
 
 	return todo, err
