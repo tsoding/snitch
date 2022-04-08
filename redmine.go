@@ -14,17 +14,11 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-const defaultTrackerId = 13
-
 // RedmineSpec contains PersonalToken for Redmine API authorization
 type RedmineSpec struct {
 	PersonalToken string
 	BaseURL       string
 	TrackerID     string
-}
-
-type IssueResponse struct {
-	Issue Issue `json:"issue"`
 }
 
 type SearchQuery struct {
@@ -49,6 +43,7 @@ type RedmineProject struct {
 	Name string `json:"name"`
 }
 
+//FIXME: переделать на простой массив и проверку на наличие в нем значения
 func (creds RedmineSpec) search(url string) (SearchQuery, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -61,19 +56,19 @@ func (creds RedmineSpec) search(url string) (SearchQuery, error) {
 	return SearchQueryHTTP(req)
 }
 
-func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]interface{}) (IssueResponse, error) {
+func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
 
 	req, err := http.NewRequest(method, url, bodyBuffer)
 	if err != nil {
-		return IssueResponse{}, err
+		return nil, err
 	}
 
 	req.Header.Add("X-Redmine-API-Key", creds.PersonalToken)
 	req.Header.Add("Content-Type", "application/json")
 
-	return createIssueQuery(req)
+	return QueryHTTP(req)
 }
 
 func (creds RedmineSpec) IsClosed(status string) bool {
@@ -182,7 +177,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 		return todo, err
 	}
 
-	id := "#" + strconv.Itoa(json.Issue.ID)
+	id := "#" + strconv.Itoa(json["issue"].(map[string]interface{})["id"].(int))
 	todo.ID = &id
 
 	return todo, err
