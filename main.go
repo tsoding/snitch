@@ -136,7 +136,7 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string, alwaysYes boo
 				todosToRemove = append(todosToRemove, &todo)
 			}
 
-			if status != "closed" {
+			if !creds.IsClosed(status) {
 				fmt.Printf("[OPEN] %v\n", todo.LogString())
 				return nil
 			}
