@@ -14,13 +14,13 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-// DAFARE(#2044): make this configurable via redmine.ini
 const defaultTrackerId = 13
 
 // RedmineSpec contains PersonalToken for Redmine API authorization
 type RedmineSpec struct {
 	PersonalToken string
 	BaseURL       string
+	TrackerID     string
 }
 
 type IssueResponse struct {
@@ -76,6 +76,13 @@ func (creds RedmineSpec) postIssueQuery(method, url string, jsonBody map[string]
 	return createIssueQuery(req)
 }
 
+func (creds RedmineSpec) IsClosed(status string) bool {
+	if status == "Done" {
+		return true
+	}
+	return false
+}
+
 func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface{}) (map[string]interface{}, error) {
 	bodyBuffer := new(bytes.Buffer)
 	err := json.NewEncoder(bodyBuffer).Encode(jsonBody)
@@ -92,6 +99,7 @@ func (creds RedmineSpec) query(method, url string, jsonBody map[string]interface
 }
 
 func (creds *RedmineSpec) checkIfIssueExists(issueID *string) (bool, error) {
+
 	url := creds.BaseURL + "/issues.json?issue_id=" + *issueID
 
 	resp, err := creds.query("GET", url, nil)
@@ -109,10 +117,11 @@ func (creds *RedmineSpec) checkIfIssueExists(issueID *string) (bool, error) {
 //PIPPO(#2027): this is a test
 func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 
-	ok, err := creds.checkIfIssueExists(todo.ID)
+	id := (*todo.ID)[1:]
+	ok, err := creds.checkIfIssueExists(&id)
 
 	if !ok {
-		return nil, fmt.Errorf("Issue %s not found", *(todo.ID))
+		return nil, fmt.Errorf("Redmine Issue %s not found", *(todo.ID))
 	}
 
 	if err != nil {
@@ -121,7 +130,7 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 
 	json, err := creds.query(
 		"GET",
-		fmt.Sprintf("%s/issues/%s.json", creds.BaseURL, (*todo.ID)[1:]),
+		fmt.Sprintf("%s/issues/%s.json", creds.BaseURL, id),
 		nil,
 	)
 
@@ -129,7 +138,7 @@ func (creds RedmineSpec) getIssue(repo string, todo Todo) (map[string]interface{
 		return nil, err
 	}
 
-	fmt.Println(json)
+	json["state"] = json["issue"].(map[string]interface{})["status"].(map[string]interface{})["name"]
 
 	return json, nil
 }
@@ -165,7 +174,7 @@ func (creds RedmineSpec) postIssue(repo string, todo Todo, body string) (Todo, e
 				"subject":     todo.Title,
 				"description": body,
 				"project_id":  projectID,
-				"tracker_id":  defaultTrackerId,
+				"tracker_id":  creds.TrackerID,
 			},
 		},
 	)
@@ -193,6 +202,7 @@ func RedmineCredentialsFromFile(filepath string) (RedmineSpec, error) {
 	return RedmineSpec{
 		PersonalToken: cfg.Section("redmine").Key("personal_token").String(),
 		BaseURL:       cfg.Section("redmine").Key("base_url").String(),
+		TrackerID:     cfg.Section("redmine").Key("tracker_id").String(),
 	}, nil
 }
 
