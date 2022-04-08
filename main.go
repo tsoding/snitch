@@ -41,19 +41,23 @@ func yOrN(question string, alwaysYes bool) (bool, error) {
 func listSubcommand(project Project, filter func(todo Todo) bool) error {
 	todosToList := []*Todo{}
 
-	err := project.WalkTodosOfDir(".", func(todo Todo) error {
-		if filter(todo) {
-			todosToList = append(todosToList, &todo)
-		}
-		return nil
-	})
+	err := project.WalkTodosOfDir(
+		".", func(todo Todo) error {
+			if filter(todo) {
+				todosToList = append(todosToList, &todo)
+			}
+			return nil
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	sort.Slice(todosToList, func(i, j int) bool {
-		return todosToList[i].Urgency > todosToList[j].Urgency
-	})
+	sort.Slice(
+		todosToList, func(i, j int) bool {
+			return todosToList[i].Urgency > todosToList[j].Urgency
+		},
+	)
 
 	for _, todo := range todosToList {
 		fmt.Println(todo.LogString())
@@ -64,33 +68,37 @@ func listSubcommand(project Project, filter func(todo Todo) bool) error {
 
 func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody string, alwaysYes bool) error {
 	todosToReport := []*Todo{}
-	err := project.WalkTodosOfDir(".", func(todo Todo) error {
-		if todo.ID != nil {
+	err := project.WalkTodosOfDir(
+		".", func(todo Todo) error {
+			if todo.ID != nil {
+				return nil
+			}
+
+			fmt.Printf("%v\n", todo.LogString())
+			fmt.Printf("Issue Title: %s\n", todo.Title)
+			for _, bodyLine := range todo.Body {
+				fmt.Printf("  %s\n", bodyLine)
+			}
+
+			yes, err := yOrN("Do you want to report this? ", alwaysYes)
+
+			if err != nil {
+				return err
+			}
+
+			if yes {
+				todosToReport = append(todosToReport, &todo)
+			}
+
 			return nil
-		}
-
-		fmt.Printf("%v\n", todo.LogString())
-		fmt.Printf("Issue Title: %s\n", todo.Title)
-		for _, bodyLine := range todo.Body {
-			fmt.Printf("  %s\n", bodyLine)
-		}
-
-		yes, err := yOrN("Do you want to report this? ", alwaysYes)
-
-		if err != nil {
-			return err
-		}
-
-		if yes {
-			todosToReport = append(todosToReport, &todo)
-		}
-
-		return nil
-	})
+		},
+	)
 
 	for _, todo := range todosToReport {
-		reportedTodo, err := todo.Report(creds, repo,
-			prependBody+"\n\n"+strings.Join(todo.Body, "\n\n"))
+		reportedTodo, err := todo.Report(
+			creds, repo,
+			prependBody+"\n\n"+strings.Join(todo.Body, "\n\n"),
+		)
 
 		if err != nil {
 			return err
@@ -114,47 +122,58 @@ func reportSubcommand(project Project, creds IssueAPI, repo string, prependBody 
 
 func purgeSubcommand(project Project, creds IssueAPI, repo string, alwaysYes bool) error {
 	todosToRemove := []*Todo{}
-	err := project.WalkTodosOfDir(".", func(todo Todo) error {
-		if todo.ID == nil {
-			return nil
-		}
+	err := project.WalkTodosOfDir(
+		".", func(todo Todo) error {
+			if todo.ID == nil {
+				return nil
+			}
 
-		status, err := todo.RetrieveStatus(creds, repo)
-		if err != nil {
+			status, err := todo.RetrieveStatus(creds, repo)
+			if err != nil {
+				return err
+			}
+
+			if creds.IsClosed(status) {
+				todosToRemove = append(todosToRemove, &todo)
+			}
+
+			if status != "closed" {
+				fmt.Printf("[OPEN] %v\n", todo.LogString())
+				return nil
+			}
+
+			fmt.Printf("[CLOSED] %v\n", todo.LogString())
+			fmt.Printf(
+				"Issue link: https://%s/%s/issues/%s\n",
+				creds.getHost(), repo, (*todo.ID)[1:],
+			)
+
+			yes, err := yOrN("This issue is closed. Do you want to remove the TODO?", alwaysYes)
+
+			if err != nil {
+				return err
+			}
+
+			if yes {
+				todosToRemove = append(todosToRemove, &todo)
+			}
+
 			return err
-		}
-		if status != "closed" {
-			fmt.Printf("[OPEN] %v\n", todo.LogString())
-			return nil
-		}
-
-		fmt.Printf("[CLOSED] %v\n", todo.LogString())
-		fmt.Printf("Issue link: https://%s/%s/issues/%s\n",
-			creds.getHost(), repo, (*todo.ID)[1:])
-
-		yes, err := yOrN("This issue is closed. Do you want to remove the TODO?", alwaysYes)
-
-		if err != nil {
-			return err
-		}
-
-		if yes {
-			todosToRemove = append(todosToRemove, &todo)
-		}
-
-		return err
-	})
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	sort.Slice(todosToRemove, func(i, j int) bool {
-		if todosToRemove[i].Filename == todosToRemove[j].Filename {
-			return todosToRemove[i].Line > todosToRemove[j].Line
-		}
+	sort.Slice(
+		todosToRemove, func(i, j int) bool {
+			if todosToRemove[i].Filename == todosToRemove[j].Filename {
+				return todosToRemove[i].Line > todosToRemove[j].Line
+			}
 
-		return todosToRemove[i].Filename < todosToRemove[j].Filename
-	})
+			return todosToRemove[i].Filename < todosToRemove[j].Filename
+		},
+	)
 
 	for _, todo := range todosToRemove {
 		err = todo.Remove()
@@ -174,10 +193,12 @@ func purgeSubcommand(project Project, creds IssueAPI, repo string, alwaysYes boo
 
 func usage() {
 	// FIXME(#9): implement a map for options instead of println'ing them all there
-	fmt.Printf("snitch [opt]\n" +
-		"\tlist [--unreported] [--reported] [--y] [--remote]: lists all todos of a dir recursively\n" +
-		"\treport [--prepend-body <issue-body>] [--y] [--remote]: reports all todos of a dir recursively \n\t\tas GitHub issues\n" +
-		"\tpurge [--remote]: removes all of the reported TODOs that refer to closed issues\n")
+	fmt.Printf(
+		"snitch [opt]\n" +
+			"\tlist [--unreported] [--reported] [--y] [--remote]: lists all todos of a dir recursively\n" +
+			"\treport [--prepend-body <issue-body>] [--y] [--remote]: reports all todos of a dir recursively \n\t\tas GitHub issues\n" +
+			"\tpurge [--remote]: removes all of the reported TODOs that refer to closed issues\n",
+	)
 }
 
 func locateDotGit(dir string) (string, error) {
@@ -268,14 +289,18 @@ func getRepo(directory string, remote string) (string, IssueAPI, error) {
 
 	origin := cfg.Section("remote \"" + remote + "\"")
 	if origin == nil {
-		return "", nil, fmt.Errorf("The git repo doesn't have any origin remote. " +
-			"Please use `git remote add' command to add one.")
+		return "", nil, fmt.Errorf(
+			"the git repo doesn't have any origin remote. " +
+				"Please use `git remote add' command to add one",
+		)
 	}
 
 	url := origin.Key("url")
 	if url == nil {
-		return "", nil, fmt.Errorf("The origin remote doesn't have any URL's " +
-			"associated with it.")
+		return "", nil, fmt.Errorf(
+			"The origin remote doesn't have any URL's " +
+				"associated with it.",
+		)
 	}
 
 	aliases, err := getURLAliases()
@@ -414,19 +439,21 @@ func main() {
 			_, unreported := params["unreported"]
 			_, reported := params["reported"]
 
-			err = listSubcommand(*project, func(todo Todo) bool {
-				filter := reported == unreported
+			err = listSubcommand(
+				*project, func(todo Todo) bool {
+					filter := reported == unreported
 
-				if unreported {
-					filter = filter || todo.ID == nil
-				}
+					if unreported {
+						filter = filter || todo.ID == nil
+					}
 
-				if reported {
-					filter = filter || todo.ID != nil
-				}
+					if reported {
+						filter = filter || todo.ID != nil
+					}
 
-				return filter
-			})
+					return filter
+				},
+			)
 			exitOnError(err)
 		case "report":
 			params, err := parseParams(os.Args[2:])

@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/ini.v1"
 	"net/http"
 	"os"
 	"os/user"
 	"path"
 	"strconv"
+
+	"gopkg.in/ini.v1"
 )
 
 // GithubCredentials contains PersonalToken for GitHub API authorization
@@ -32,12 +33,17 @@ func (creds GithubCredentials) query(method, url string, jsonBody map[string]int
 	return QueryHTTP(req)
 }
 
+func (creds GithubCredentials) IsClosed(status string) bool {
+	return status == "closed"
+}
+
 func (creds GithubCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 	json, err := creds.query(
 		"GET",
 		// FIXME(#59): possible GitHub API injection attack
 		"https://api.github.com/repos/"+repo+"/issues/"+(*todo.ID)[1:],
-		nil)
+		nil,
+	)
 
 	if err != nil {
 		return nil, err
@@ -53,7 +59,8 @@ func (creds GithubCredentials) postIssue(repo string, todo Todo, body string) (T
 		map[string]interface{}{
 			"title": todo.Title,
 			"body":  body,
-		})
+		},
+	)
 	if err != nil {
 		return todo, err
 	}

@@ -49,6 +49,10 @@ func (creds GiteaCredentials) getIssue(repo string, todo Todo) (map[string]inter
 	return json, nil
 }
 
+func (creds GiteaCredentials) IsClosed(status string) bool {
+	return status == "closed"
+}
+
 func (creds GiteaCredentials) postIssue(repo string, todo Todo, body string) (Todo, error) {
 	json, err := creds.query(
 		"POST",

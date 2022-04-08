@@ -13,6 +13,7 @@ type IssueAPI interface {
 	getIssue(repo string, todo Todo) (map[string]interface{}, error)
 	postIssue(repo string, todo Todo, body string) (Todo, error)
 	getHost() string
+	IsClosed(status string) bool
 }
 
 // QueryHTTP makes an API query

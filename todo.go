@@ -29,28 +29,36 @@ func (todo Todo) LogString() string {
 	urgencySuffix := strings.Repeat(string(todo.Keyword[len(todo.Keyword)-1]), todo.Urgency)
 
 	if todo.ID == nil {
-		return fmt.Sprintf("%s:%d: %s%s%s: %s",
+		return fmt.Sprintf(
+			"%s:%d: %s%s%s: %s",
 			todo.Filename, todo.Line,
 			todo.Prefix, todo.Keyword, urgencySuffix,
-			todo.Suffix)
+			todo.Suffix,
+		)
 	}
 
-	return fmt.Sprintf("%s:%d: %s%s%s(%s): %s",
+	return fmt.Sprintf(
+		"%s:%d: %s%s%s(%s): %s",
 		todo.Filename, todo.Line,
 		todo.Prefix, todo.Keyword, urgencySuffix,
-		*todo.ID, todo.Suffix)
+		*todo.ID, todo.Suffix,
+	)
 }
 
 func (todo Todo) String() string {
 	urgencySuffix := strings.Repeat(string(todo.Keyword[len(todo.Keyword)-1]), todo.Urgency)
 	if todo.ID == nil {
-		return fmt.Sprintf("%s%s%s: %s",
-			todo.Prefix, todo.Keyword, urgencySuffix, todo.Suffix)
+		return fmt.Sprintf(
+			"%s%s%s: %s",
+			todo.Prefix, todo.Keyword, urgencySuffix, todo.Suffix,
+		)
 	}
 
-	return fmt.Sprintf("%s%s%s(%s): %s",
+	return fmt.Sprintf(
+		"%s%s%s(%s): %s",
 		todo.Prefix, todo.Keyword, urgencySuffix, *todo.ID,
-		todo.Suffix)
+		todo.Suffix,
+	)
 }
 
 // ParseBodyLine strips off the prefix of a body line of the TODO
@@ -126,24 +134,28 @@ func (todo Todo) updateInPlace(lineCallback func(int, string) (string, bool)) er
 
 // Update updates the file where the Todo is located in-place.
 func (todo Todo) Update() error {
-	return todo.updateInPlace(func(lineNumber int, line string) (string, bool) {
-		if lineNumber == todo.Line {
-			return todo.String(), false
-		}
+	return todo.updateInPlace(
+		func(lineNumber int, line string) (string, bool) {
+			if lineNumber == todo.Line {
+				return todo.String(), false
+			}
 
-		return line, false
-	})
+			return line, false
+		},
+	)
 }
 
 // Remove removes the Todo from the file where it is located in-place.
 func (todo Todo) Remove() error {
-	return todo.updateInPlace(func(lineNumber int, line string) (string, bool) {
-		if todo.Line <= lineNumber && lineNumber <= todo.Line+len(todo.Body) {
-			return "", true
-		}
+	return todo.updateInPlace(
+		func(lineNumber int, line string) (string, bool) {
+			if todo.Line <= lineNumber && lineNumber <= todo.Line+len(todo.Body) {
+				return "", true
+			}
 
-		return line, false
-	})
+			return line, false
+		},
+	)
 }
 
 // GitCommit commits the Todo location to the git repo
@@ -157,7 +169,14 @@ func (todo Todo) GitCommit(prefix string) error {
 		return err
 	}
 
-	if err := LogCommand(exec.Command("git", "commit", "-m", fmt.Sprintf("%s %s(%s)", prefix, todo.Keyword, *todo.ID))).Run(); err != nil {
+	if err := LogCommand(
+		exec.Command(
+			"git",
+			"commit",
+			"-m",
+			fmt.Sprintf("%s %s(%s)", prefix, todo.Keyword, *todo.ID),
+		),
+	).Run(); err != nil {
 		return err
 	}
 
@@ -165,7 +184,7 @@ func (todo Todo) GitCommit(prefix string) error {
 }
 
 // RetrieveStatus retrieves the current status of TODOs issue
-// from GitHub (works for GitLab API too)
+// from task manager tool (github, gitlab, redmine)
 func (todo Todo) RetrieveStatus(creds IssueAPI, repo string) (string, error) {
 	json, err := creds.getIssue(repo, todo)
 
