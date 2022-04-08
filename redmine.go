@@ -36,7 +36,6 @@ type RedmineProject struct {
 	Name string `json:"name"`
 }
 
-//FIXME(#2129): this is a test
 func (creds RedmineCredentials) search(url string) (map[string]interface{}, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -102,7 +101,6 @@ func (creds *RedmineCredentials) checkIfIssueExists(issueID *string) (bool, erro
 	return true, nil
 }
 
-//PIPPO(#2027): this is a test
 func (creds RedmineCredentials) getIssue(repo string, todo Todo) (map[string]interface{}, error) {
 
 	id := (*todo.ID)[1:]
