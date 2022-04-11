@@ -48,6 +48,7 @@ func (creds RedmineCredentials) postIssueQuery(method, url string, jsonBody map[
 	return QueryHTTP(req)
 }
 
+// IsClosed tells if the given status is closed on the given provider, as the label may vary across different ones
 func (creds RedmineCredentials) IsClosed(status string) bool {
 	if status == "Done" {
 		return true
