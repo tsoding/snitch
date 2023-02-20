@@ -9,12 +9,12 @@ A simple tool that collects TODOs in the source code and reports them as GitHub 
 ## How it works
 
 1. Snitch finds an unreported TODO,
-2. Reports it to the GitHub as an issue,
+2. Reports it to GitHub as an issue,
 3. Assigns the Issue number to the TODO marking it a reported,
 4. Commits the reported TODO to the git repo,
 5. Repeats the process until all of the unreported TODOs are reported.
 
-After that you are supposed to push the new reported TODOs yourself.
+After that, you are supposed to push the newly reported TODOs yourself.
 
 ## TODO Format
 
@@ -31,7 +31,7 @@ After that you are supposed to push the new reported TODOs yourself.
 Regular expression: `^(.*)TODO(O*): (.*)$` [Play](https://regex101.com/r/u5lkxf/2)
 
 Capture Groups:
-- Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
+- Group 1: **Prefix**. Used only to precisely recover the text of the line where the TODO is originally located.
 - Group 2: **Urgency Suffix**. Used to indicate the urgency of the TODO. The higher the amount of `O`-s, the more urgent the TODO is. (See [Urgency](#Urgency) for more info)
 - Group 3: **Suffix**. Used as the title of the issue.
 
@@ -48,7 +48,7 @@ Capture Groups:
 Regular expression: `^(.*)TODO(O*)\((.*)\): (.*)$` [Play](https://regex101.com/r/5U6rjS/1)
 
 Capture Groups:
-- Group 1: **Prefix**. Used only to precisly recover the text of the line where the TODO is originally located.
+- Group 1: **Prefix**. Used only to precisely recover the text of the line where the TODO is originally located.
 - Group 2: **Urgency Suffix**. Used to indicate the urgency of the TODO. The higher the amount of `O`-s, the more urgent the TODO is. (See [Urgency](#Urgency) for more info)
 - Group 3: **ID**. The number of the Issue.
 - Group 4: **Suffix**. Used as the title of the issue.
@@ -73,13 +73,13 @@ Capture Groups:
 
 ### Urgency
 
-The urgency system was stolen from [fixmee](https://github.com/rolandwalker/fixmee#explanation) Emacs extension. The urgency of TODOs is indicated by repetitions of the final character of the keyword. For example, one might write TODOOOOOOOOO for an important issue. The `list` subcommand will sort the TODOs in the descending order by their urgency.
+The urgency system was stolen from [fixmee](https://github.com/rolandwalker/fixmee#explanation) Emacs extension. The urgency of TODOs is indicated by repetitions of the final character of the keyword. For example, one might write TODOOOOOOOOO for an important issue. The `list` subcommand will sort the TODOs in descending order by their urgency.
 
 ## Remote specification
 
-By default Snitch will automatically reference the `origin` remote as the defacto standard for most projects.
+By default, Snitch will automatically reference the `origin` remote as the defacto standard for most projects.
 
-However, you can specify which remote Snitch uses on a per repo basis.
+However, you can specify which remote Snitch uses on a per-repo basis.
 
 ### .snitch.yaml
 
@@ -101,7 +101,7 @@ keywords:
 ### Commandline
 Remotes can be dynamically specified when Snitch is called.
 
-This will overide a previously defined remote in `.snitch.yaml`
+This will override a previously defined remote in `.snitch.yaml`
 
 #### Example
 ```
@@ -111,7 +111,7 @@ $ ./snitch report --remote <remote>
 ## Installation
 
 ```console
-$ go get github.com/tsoding/snitch
+$ go install github.com/tsoding/snitch
 ```
 
 ## Credentials
@@ -124,7 +124,7 @@ Snitch obtains GitHub credentials from two places:  (default) environment variab
 
 #### File
 
-Config file can be stored in one of the following directories:
+The config file can be stored in one of the following directories:
 - `$HOME/.config/snitch/github.ini`
 - `$HOME/.snitch/github.ini`
 
@@ -134,23 +134,23 @@ Format:
 personal_token = <personal-token>
 ```
 
-Checkout [GitHub Help][personal-token] on how to get the Personal Access Token.
+Check out [GitHub Help][personal-token] on how to get the Personal Access Token.
 
-Make sure to enable full access to private repos. For some reason it's required to post issues.
+Make sure to enable full access to private repos. For some reason, it's required to post issues.
 
 ### GitLab Credentials
 
-GitLab credentials configuration is similar to GitHub with an exception that you also have to provide the host of the GitLab instance.
+GitLab credentials configuration is similar to GitHub with the exception that you also have to provide the host of the GitLab instance.
 
 #### Environment Variable
 
 `export GITLAB_PERSONAL_TOKEN = <personal-token>` which can be added to `.bashrc`.
 
-Each of the credentials are to be separated by `,` and in format: `<host>:<personal-token>`. Credentials without host part, e.g. `<personal-token>` are interpreted as `gitlab.com` tokens to maintain backward compatibility and invalid tokens are ignored (prints an error message).
+Each of the credentials is to be separated by `,` and in the format: `<host>:<personal-token>`. Credentials without host part, e.g. `<personal-token>` are interpreted as `gitlab.com` tokens to maintain backward compatibility and invalid tokens are ignored (prints an error message).
 
 #### File
 
-Config file can be stored in one of the following directories:
+The config file can be stored in one of the following directories:
 - `$HOME/.config/snitch/gitlab.ini`
 - `$HOME/.snitch/gitlab.ini`
 
@@ -164,7 +164,7 @@ personal_token = <personal-token>
 personal_token = <personal-token>
 ```
 
-Checkout [GitLab Help][personal-token-gitlab] on how to get the Personal Access Token. Make sure to enable `api` scope for the token.
+Check out [GitLab Help][personal-token-gitlab] on how to get the Personal Access Token. Make sure to enable `api` scope for the token.
 
 ## Usage
 
@@ -192,7 +192,7 @@ keywords:
 
 ### Issue Title Transformation
 
-You can apply project local issue title transformations. Create
+You can apply project local issue title transformations. Create a
 `.snitch.yaml` file in the root of the project with the following
 content:
 
